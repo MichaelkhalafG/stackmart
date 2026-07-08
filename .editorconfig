@@ -1,0 +1,31 @@
+# STACKMART — EditorConfig ( https://editorconfig.org )
+# Consistent encoding, line endings, and indentation across /api (PHP) and /web (TS).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# TypeScript / JavaScript / JSON / CSS ( /web ) → 2-space
+[*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css,scss}]
+indent_size = 2
+
+# PHP ( /api ) → 4-space (PSR-12)
+[*.php]
+indent_size = 4
+
+# YAML must be 2-space
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown: keep trailing whitespace (two spaces = hard line break)
+[*.md]
+trim_trailing_whitespace = false
+
+# Makefiles require real tabs
+[Makefile]
+indent_style = tab
