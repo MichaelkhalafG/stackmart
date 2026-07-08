@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+import { Providers } from "./providers";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Container } from "@/components/layout/Container";
@@ -24,11 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="flex min-h-full flex-col antialiased">
-        <Header />
-        <main className="flex-1">
-          <Container className="py-6">{children}</Container>
-        </main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="flex-1">
+            <Container className="py-6">{children}</Container>
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
