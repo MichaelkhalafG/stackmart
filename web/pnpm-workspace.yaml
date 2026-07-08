@@ -1,0 +1,8 @@
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
+# pnpm build-script allowlist. Only these vetted native deps may run install/build
+# scripts (sharp = Next.js image optimization; unrs-resolver = eslint-config-next).
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver

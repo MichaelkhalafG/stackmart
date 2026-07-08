@@ -11,16 +11,20 @@ return [
     | may name a real gateway. Switching later = set PAYMENT_PROVIDER + add one
     | provider class to the map below (see Planning/18_Checkout.md).
     |
-    | NOTE: This file is config scaffold ONLY. The PaymentProvider contract,
-    | FakePaymentProvider, and the container binding are authored in S1.07.
+    | The PaymentProvider contract, FakePaymentProvider, and the container binding
+    | (AppServiceProvider) are authored in S1.07 and resolve the class below.
     */
 
     'provider' => env('PAYMENT_PROVIDER', 'fake'),
 
     'providers' => [
-        // Resolved and bound to the PaymentProvider interface in S1.07.
+        // Bound to the PaymentProvider interface in AppServiceProvider via 'provider' above.
         'fake' => \App\Payments\FakePaymentProvider::class,
         // Real gateway classes are registered here on the swap — never before.
     ],
+
+    // Where FakePaymentProvider sends the buyer's browser for the dev-only mock checkout.
+    // Config-cache-safe (never read env() directly in provider code).
+    'frontend_url' => env('FRONTEND_URL'),
 
 ];
