@@ -42,13 +42,18 @@ it('exposes null demo_url and repository_url when unset (keys still present)', f
     expect($res->json('data.repository_url'))->toBeNull();
 });
 
-it('returns 404 for an unknown slug', function () {
-    $this->getJson('/api/products/does-not-exist')->assertNotFound();
+it('returns 404 with the exact contract message for an unknown slug', function () {
+    // Frozen contract: no model class, no debug trace — exactly {"message":"Not found."}.
+    $this->getJson('/api/products/does-not-exist')
+        ->assertNotFound()
+        ->assertExactJson(['message' => 'Not found.']);
 });
 
-it('returns 404 for a non-published (draft) slug', function () {
+it('returns 404 with the exact contract message for a non-published (draft) slug', function () {
     $cat = Category::factory()->create();
     Product::factory()->create(['category_id' => $cat->id, 'slug' => 'hidden-draft']); // draft
 
-    $this->getJson('/api/products/hidden-draft')->assertNotFound();
+    $this->getJson('/api/products/hidden-draft')
+        ->assertNotFound()
+        ->assertExactJson(['message' => 'Not found.']);
 });
