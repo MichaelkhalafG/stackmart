@@ -10,9 +10,10 @@ export const colorTokens = [
   "fg",
   "fg-muted",
   "accent",
-  "success",
+  "primary",
+  "primary-emphasis",
+  "highlight",
   "danger",
-  "attention",
   "tag-bg",
   "tag-fg",
 ] as const;
