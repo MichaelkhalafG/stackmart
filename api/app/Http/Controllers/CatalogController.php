@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductIndexRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 
@@ -85,5 +86,21 @@ class CatalogController extends Controller
                 'total' => $products->total(),
             ],
         ]);
+    }
+
+    /**
+     * GET /api/products/{slug} — full listing detail.
+     *
+     * Resolved by slug via implicit route-model binding (Product's route key is
+     * `slug`); an unknown slug yields Laravel's automatic 404. Only PUBLISHED
+     * listings are public — a draft/sold slug also 404s (matches the catalog).
+     */
+    public function show(Product $product): ProductResource
+    {
+        abort_unless($product->status === Product::STATUS_PUBLISHED, 404);
+
+        $product->load('category');
+
+        return new ProductResource($product);
     }
 }

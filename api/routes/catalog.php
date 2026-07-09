@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 
 // J2.01 — public catalog index.
 Route::get('/products', [CatalogController::class, 'index']);
+
+// J2.02 — public listing detail (bound by slug; unknown slug → 404).
+Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
