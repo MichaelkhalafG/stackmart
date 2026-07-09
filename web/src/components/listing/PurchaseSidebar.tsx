@@ -1,6 +1,7 @@
 import { formatPrice } from "@/components/product/MarketplaceCard";
 
 import { BuyNowButton } from "./BuyNowButton";
+import { DemoRepoButtons } from "./DemoRepoButtons";
 import type { ProductDetail } from "./types";
 
 /**
@@ -25,12 +26,14 @@ export function PurchaseSidebar({ product }: { product: ProductDetail }) {
         <BuyNowButton productId={product.id} />
 
         {/*
-          ── S2.04 SEAM ──────────────────────────────────────────────────────────────
-          Live Demo (secondary) + View Repository (outline, RepoIcon) render HERE, directly
-          under Buy Now, ONLY when product.demo_url / product.repository_url exist. Built in
-          S2.04 (repoProvider + RepoIcon). Left intentionally empty for now.
+          Demo / Repository buttons (S2.04) — directly under Buy Now, each rendered ONLY when its
+          URL exists (06_UI_System.md §3). Live Demo = secondary, View Repository = outline; neither
+          is green so Buy Now stays the sole primary. `empty:hidden` collapses the row when both
+          URLs are null (DemoRepoButtons returns null).
         */}
-        <div className="flex flex-col gap-3 empty:hidden" data-slot="demo-repo-actions" />
+        <div className="flex flex-col gap-3 empty:hidden" data-slot="demo-repo-actions">
+          <DemoRepoButtons demoUrl={product.demo_url} repositoryUrl={product.repository_url} />
+        </div>
 
         <ul className="flex flex-col gap-2 border-t border-border pt-4 text-sm text-fg-muted">
           <li>Instant digital delivery</li>
