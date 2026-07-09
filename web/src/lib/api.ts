@@ -1,3 +1,4 @@
+import { apiUrl } from "@/lib/apiBase";
 import { useAuthStore } from "@/store/auth";
 
 /** 422 validation shape from Laravel Form Requests: { field: ["msg", ...] } (12_API_Specification.md). */
@@ -23,20 +24,19 @@ export class ApiError extends Error {
   }
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 /**
  * The single fetch wrapper that talks to the Laravel API (14/15_*.md).
- * - prefixes `NEXT_PUBLIC_API_URL`;
+ * - resolves the base via `apiUrl()` (NEXT_PUBLIC_API_URL origin → `/api`, trailing-slash safe);
  * - attaches `Authorization: Bearer <token>` ONLY when a token is present (from the auth store);
  * - JSON by default; parses success/error JSON; surfaces the 422 `errors` map;
  * - on 401 clears the auth store and (client-side) redirects to /login.
  *
  * Client-side use only — Server Components fetch the API directly (08_Frontend_Architecture.md).
- * `path` is relative to the API base and should start with "/", e.g. api("/products").
+ * `path` is relative to the API root and should start with "/", e.g. api("/products") → `<origin>/api/products`.
  */
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!BASE_URL) {
+  const url = apiUrl(path);
+  if (!url) {
     throw new ApiError(0, "NEXT_PUBLIC_API_URL is not configured");
   }
 
@@ -50,7 +50,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...init, headers });
+  const res = await fetch(url, { ...init, headers });
 
   // Parse body (tolerate empty 204 responses and non-JSON).
   let body: unknown = null;

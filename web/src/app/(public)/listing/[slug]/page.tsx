@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 
+import { apiUrl } from "@/lib/apiBase";
+import { productImageUrl } from "@/lib/imageUrl";
 import { FaqAccordion } from "@/components/listing/FaqAccordion";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { MetricsGrid } from "@/components/listing/MetricsGrid";
@@ -19,13 +21,13 @@ import type { ProductDetail } from "@/components/listing/types";
  */
 export const revalidate = 300;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-
 async function getProduct(slug: string): Promise<ProductDetail | null> {
+  // Resolve via apiUrl() so it always hits `<origin>/api/products/{slug}` (trailing-slash safe).
   // No API base configured (e.g. build without env) → treat as not found; a real request fetches live.
-  if (!API_BASE) return null;
+  const url = apiUrl(`/products/${encodeURIComponent(slug)}`);
+  if (!url) return null;
 
-  const res = await fetch(`${API_BASE}/products/${encodeURIComponent(slug)}`, {
+  const res = await fetch(url, {
     next: { revalidate },
     headers: { Accept: "application/json" },
   });
@@ -47,7 +49,7 @@ export async function generateMetadata({
   if (!product) return { title: "Listing not found" };
 
   const description = product.tagline || product.description?.slice(0, 200);
-  const ogImage = product.images?.[0]; // OG image = the product's FIRST image
+  const ogImage = productImageUrl(product.images?.[0]); // OG image = the product's FIRST image (normalized)
 
   return {
     title: product.title,

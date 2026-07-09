@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { apiUrl } from "@/lib/apiBase";
 import { CategoryStrip, type Category } from "@/components/home/CategoryStrip";
 import { FeaturedListings } from "@/components/home/FeaturedListings";
 import { Hero } from "@/components/home/Hero";
@@ -37,7 +38,6 @@ export const metadata: Metadata = {
  */
 export const revalidate = 300;
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 const FEATURED_LIMIT = 6;
 
 type ListResponse<T> = { data?: T[] };
@@ -47,11 +47,13 @@ type ListResponse<T> = { data?: T[] };
  * (J2.01/J2.03) and may not be live while the frontend is built in parallel, so every fetch is
  * fail-soft: on a missing env var, network error, or non-2xx it resolves to `[]` and the page
  * renders its Blankslate sections. The page lights up automatically once the endpoint responds.
+ * The URL is resolved via `apiUrl()` so it always hits `<origin>/api/...` (trailing-slash safe).
  */
 async function fetchList<T>(path: string): Promise<T[]> {
-  if (!API_BASE) return [];
+  const url = apiUrl(path);
+  if (!url) return [];
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const res = await fetch(url, {
       next: { revalidate },
       headers: { Accept: "application/json" },
     });
