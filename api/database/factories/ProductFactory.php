@@ -68,7 +68,10 @@ class ProductFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'status' => Product::STATUS_PUBLISHED,
-            'published_at' => fake()->dateTimeBetween('-1 year', 'now'),
+            // Explicit UTC-relative datetime (via now(), the app-timezone Carbon) rather than
+            // fake()->dateTimeBetween (which uses PHP's date.timezone) — keeps ordering
+            // deterministic across engines, e.g. MariaDB 10.4 with second-only DATETIME.
+            'published_at' => now()->subDays(fake()->numberBetween(1, 365)),
         ]);
     }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CatalogController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -11,6 +12,13 @@ use Illuminate\Support\Facades\Route;
 |   GET  /products/{slug}     detail (ProductResource exposes demo_url + repository_url)
 |   GET  /categories          list
 |   POST /submissions         seller submission (fires SubmissionReceived)
-|
-| Intentionally EMPTY on Day 1 — the fills these in.
 */
+
+// J2.01 — public catalog index.
+Route::get('/products', [CatalogController::class, 'index']);
+
+// J2.02 — public listing detail (bound by slug; unknown slug → 404).
+Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
+
+// J2.03 — public category taxonomy (ordered by sort_order).
+Route::get('/categories', [CatalogController::class, 'categories']);
