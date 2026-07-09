@@ -19,3 +19,6 @@ Route::get('/products', [CatalogController::class, 'index']);
 
 // J2.02 — public listing detail (bound by slug; unknown slug → 404).
 Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
+
+// J2.03 — public category taxonomy (ordered by sort_order).
+Route::get('/categories', [CatalogController::class, 'categories']);

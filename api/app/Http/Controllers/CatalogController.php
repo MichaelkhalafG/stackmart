@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductIndexRequest;
+use App\Http\Resources\CategoryResource;
 use App\Http\Resources\ProductResource;
+use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * Public catalog endpoints (routes/catalog.php) — no auth.
@@ -102,5 +105,18 @@ class CatalogController extends Controller
         $product->load('category');
 
         return new ProductResource($product);
+    }
+
+    /**
+     * GET /api/categories — the full taxonomy, ordered by sort_order.
+     *
+     * Flat `{ data: [...] }` (no pagination) per the contract; powers the
+     * marketplace filter sidebar and the product form's category select.
+     */
+    public function categories(): AnonymousResourceCollection
+    {
+        return CategoryResource::collection(
+            Category::orderBy('sort_order')->get()
+        );
     }
 }
