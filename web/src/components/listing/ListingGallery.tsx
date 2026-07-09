@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
 /**
- * ListingGallery (13_Component_Map.md) — main image + clickable thumbnails. Renders with a plain
- * <img> (not Next/Image): the images come from the API storage host, and configuring
- * `next.config` `images.remotePatterns` is outside this task's allowed files — deferred to the
- * image/deploy config task. Consistent with the S2.01 MarketplaceCard cover.
+ * ListingGallery (13_Component_Map.md) — main image + clickable thumbnails via Next/Image. Images
+ * come from the API public storage host, allowed through `next.config` `images.remotePatterns`
+ * (derived from the NEXT_PUBLIC_API_URL origin in S2.05).
  */
 export function ListingGallery({ images, title }: { images: string[]; title: string }) {
   const [active, setActive] = useState(0);
@@ -25,9 +25,15 @@ export function ListingGallery({ images, title }: { images: string[]; title: str
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="aspect-[16/9] w-full overflow-hidden rounded-md border border-border bg-canvas-subtle">
-        {/* eslint-disable-next-line @next/next/no-img-element -- API storage host; remotePatterns config is out of scope for S2.03 */}
-        <img src={images[current]} alt={title} className="size-full object-cover" />
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border border-border bg-canvas-subtle">
+        <Image
+          src={images[current]}
+          alt={title}
+          fill
+          priority
+          sizes="(max-width: 1024px) 100vw, 66vw"
+          className="object-cover"
+        />
       </div>
 
       {images.length > 1 ? (
@@ -40,14 +46,13 @@ export function ListingGallery({ images, title }: { images: string[]; title: str
               aria-label={`View image ${index + 1} of ${images.length}`}
               aria-current={index === current}
               className={cn(
-                "aspect-[16/9] overflow-hidden rounded-md border bg-canvas-subtle transition-colors",
+                "relative aspect-[16/9] overflow-hidden rounded-md border bg-canvas-subtle transition-colors",
                 index === current
                   ? "border-accent ring-1 ring-accent"
                   : "border-border hover:border-fg-muted",
               )}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
-              <img src={image} alt="" className="size-full object-cover" />
+              <Image src={image} alt="" fill sizes="15vw" className="object-cover" />
             </button>
           ))}
         </div>

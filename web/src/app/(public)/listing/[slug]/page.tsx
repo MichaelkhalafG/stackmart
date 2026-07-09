@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
@@ -5,6 +6,7 @@ import { Check } from "lucide-react";
 import { FaqAccordion } from "@/components/listing/FaqAccordion";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { MetricsGrid } from "@/components/listing/MetricsGrid";
+import { ProductJsonLd } from "@/components/listing/ProductJsonLd";
 import { PurchaseSidebar } from "@/components/listing/PurchaseSidebar";
 import { TechStackChips } from "@/components/listing/TechStackChips";
 import type { ProductDetail } from "@/components/listing/types";
@@ -35,6 +37,39 @@ async function getProduct(slug: string): Promise<ProductDetail | null> {
   return json.data ?? null;
 }
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProduct(slug); // deduped with the page fetch (same request)
+  if (!product) return { title: "Listing not found" };
+
+  const description = product.tagline || product.description?.slice(0, 200);
+  const ogImage = product.images?.[0]; // OG image = the product's FIRST image
+
+  return {
+    title: product.title,
+    description,
+    alternates: { canonical: `/listing/${product.slug}` },
+    openGraph: {
+      type: "website",
+      url: `/listing/${product.slug}`,
+      title: product.title,
+      description,
+      siteName: "STACKMART",
+      images: ogImage ? [{ url: ogImage, alt: product.title }] : undefined,
+    },
+    twitter: {
+      card: ogImage ? "summary_large_image" : "summary",
+      title: product.title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  };
+}
+
 export default async function ListingPage({
   params,
 }: {
@@ -46,6 +81,8 @@ export default async function ListingPage({
 
   return (
     <div className="py-2">
+      <ProductJsonLd product={product} />
+
       {/* Header row (title + status labels), full width */}
       <div className="flex flex-col gap-3 border-b border-border pb-6">
         <div className="flex flex-wrap items-center gap-2">

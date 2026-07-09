@@ -1,7 +1,29 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 
 import { MarketplaceBrowser } from "@/components/marketplace/MarketplaceBrowser";
 import { ProductGridSkeleton } from "@/components/marketplace/ProductGridSkeleton";
+
+const MARKETPLACE_DESCRIPTION =
+  "Browse vetted micro-SaaS products, web apps, and codebases. Filter by category, tech stack, and price, then evaluate each listing with a live demo and repository review.";
+
+export const metadata: Metadata = {
+  title: "Marketplace",
+  description: MARKETPLACE_DESCRIPTION,
+  alternates: { canonical: "/marketplace" },
+  openGraph: {
+    type: "website",
+    url: "/marketplace",
+    title: "Marketplace · STACKMART",
+    description: MARKETPLACE_DESCRIPTION,
+    siteName: "STACKMART",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Marketplace · STACKMART",
+    description: MARKETPLACE_DESCRIPTION,
+  },
+};
 
 /**
  * `/marketplace` — the marketplace is URL-driven and client-filtered via TanStack Query against

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
@@ -45,14 +46,14 @@ export function MarketplaceCard({ product }: { product: ProductListItem }) {
         href={`/listing/${product.slug}`}
         className="flex h-full flex-col rounded-[inherit] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <div className="aspect-[16/9] w-full overflow-hidden border-b border-border bg-canvas-subtle">
+        <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-border bg-canvas-subtle">
           {product.cover_image ? (
-            // eslint-disable-next-line @next/next/no-img-element -- external API storage host; next.config remote patterns are out of scope for S2.01
-            <img
+            <Image
               src={product.cover_image}
               alt={product.title}
-              loading="lazy"
-              className="size-full object-cover transition-transform duration-200 group-hover/mkt-card:scale-[1.02]"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-200 group-hover/mkt-card:scale-[1.02]"
             />
           ) : (
             <div className="flex size-full items-center justify-center px-4 text-center">

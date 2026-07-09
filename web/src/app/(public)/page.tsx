@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { CategoryStrip, type Category } from "@/components/home/CategoryStrip";
 import { FeaturedListings } from "@/components/home/FeaturedListings";
 import { Hero } from "@/components/home/Hero";
@@ -5,6 +7,27 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { SellCta } from "@/components/home/SellCta";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import type { ProductListItem } from "@/components/product/MarketplaceCard";
+
+const HOME_DESCRIPTION =
+  "A curated marketplace for ready-made micro-SaaS products, web apps, and codebases — evaluate via live demo and repository links, then buy instantly with full source code + a license key.";
+
+export const metadata: Metadata = {
+  title: "Buy ready-made micro-SaaS products, web apps & codebases",
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "STACKMART — buy ready-made micro-SaaS",
+    description: HOME_DESCRIPTION,
+    siteName: "STACKMART",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "STACKMART — buy ready-made micro-SaaS",
+    description: HOME_DESCRIPTION,
+  },
+};
 
 /**
  * Home `/` — public Server Component with ISR (08_Frontend_Architecture.md §2). Fetches the
