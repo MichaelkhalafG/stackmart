@@ -4,14 +4,15 @@
 
 /*
   ┌─────────────────────────────────────────────────────────────────────────────┐
-  │ STACKMART design tokens — GitHub / Primer-borrowed. THE design system.        │
+  │ STACKMART design tokens. Palette = MDN International brand identity;           │
+  │ structure (layout, spacing, 6px radius, 1px borders, fonts) = Primer-derived.  │
   │ Source of truth: Planning/06_UI_System.md (exact hexes, radius, fonts).       │
   │                                                                               │
   │ Tailwind v4: there is NO tailwind.config.ts — the theme lives here. `@theme`  │
   │ generates BOTH Tailwind utilities (bg-canvas, text-fg, border-border, …) and  │
   │ resolves CSS variables (var(--canvas), …), so tokens are usable both ways.    │
   │ shadcn's semantic vars (--primary, --ring, --border, …) are re-pointed to the │
-  │ palette once, so every shadcn component inherits GitHub styling. No dark mode. │
+  │ palette once, so every shadcn component inherits the MDN palette. No dark mode.│
   └─────────────────────────────────────────────────────────────────────────────┘
 */
 
@@ -22,18 +23,19 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Brand palette — exact 06 hexes */
-  --canvas: #ffffff;
-  --canvas-subtle: #f6f8fa;
-  --border: #d0d7de;
-  --fg: #1f2328;
-  --fg-muted: #59636e;
-  --accent: #0969da;      /* links, focus ring, active nav */
-  --success: #1f883d;     /* Buy Now green — the ONLY primary action */
-  --danger: #cf222e;
-  --attention: #9a6700;
-  --tag-bg: #ddf4ff;
-  --tag-fg: #0969da;
+  /* MDN brand palette — exact 06 hexes (Planning/06_UI_System.md §1). */
+  --canvas: #ffffff;           /* page background, cards */
+  --canvas-subtle: #f6f8fa;    /* box header rows, subtle fills, table hover */
+  --border: #d5d8dc;           /* every 1px border */
+  --fg: #1f2328;               /* primary text */
+  --fg-muted: #5f6567;         /* help text, secondary labels, metadata */
+  --accent: #010ed0;           /* royal blue — links, focus ring, active nav, interactive/hover */
+  --primary: #0c2239;          /* navy — Buy Now + solid actions + dark headers (the ONLY primary action) */
+  --primary-emphasis: #0a0d31; /* darker navy — hover / emphasis on solid actions & dark headers */
+  --highlight: #fbb002;        /* amber — sparing badge/highlight FILLS only; never a button, body text, or large fill (fails AA as text on white) */
+  --danger: #cf222e;           /* validation errors, destructive */
+  --tag-bg: #dee0ff;           /* lavender — tag/chip background */
+  --tag-fg: #0c2239;           /* navy — tag/chip text on lavender */
 
   /* Shape & space (06 §1): 6px radius, 1px borders, near-zero shadows, 4/8px scale, 1280 container */
   --radius: 6px;
@@ -54,7 +56,7 @@
   --card-foreground: var(--fg);
   --popover: var(--canvas);
   --popover-foreground: var(--fg);
-  --primary: var(--success);
+  /* --primary is a raw brand token (navy) above; shadcn inherits it directly. */
   --primary-foreground: #ffffff;
   --secondary: var(--canvas-subtle);
   --secondary-foreground: var(--fg);
@@ -67,15 +69,15 @@
   --ring: var(--accent);
   --sidebar: var(--canvas);
   --sidebar-foreground: var(--fg);
-  --sidebar-primary: var(--success);
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--canvas-subtle);
   --sidebar-accent-foreground: var(--fg);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--accent);
   --chart-1: var(--accent);
-  --chart-2: var(--success);
-  --chart-3: var(--attention);
+  --chart-2: var(--primary);
+  --chart-3: var(--highlight);
   --chart-4: var(--danger);
   --chart-5: var(--fg-muted);
 }
@@ -92,9 +94,9 @@
   --color-fg-muted: var(--fg-muted);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-success: var(--success);
+  --color-primary-emphasis: var(--primary-emphasis);
+  --color-highlight: var(--highlight);
   --color-danger: var(--danger);
-  --color-attention: var(--attention);
   --color-tag-bg: var(--tag-bg);
   --color-tag-fg: var(--tag-fg);
 
