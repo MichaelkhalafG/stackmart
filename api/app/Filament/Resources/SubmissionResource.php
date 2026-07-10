@@ -6,6 +6,7 @@ use App\Filament\Resources\SubmissionResource\Pages;
 use App\Models\SellerSubmission;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -98,7 +99,73 @@ class SubmissionResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Review'),
+
+                // One-click status transitions (the status Select on the form does the
+                // same; these are the quick-queue affordances). new → in_review → approved | rejected.
+                Tables\Actions\Action::make('start_review')
+                    ->label('Start review')
+                    ->icon('heroicon-o-play')
+                    ->color('info')
+                    ->visible(fn (SellerSubmission $record): bool => $record->status === SellerSubmission::STATUS_NEW)
+                    ->action(fn (SellerSubmission $record) => self::transition($record, SellerSubmission::STATUS_IN_REVIEW)),
+
+                Tables\Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn (SellerSubmission $record): bool => in_array($record->status, [SellerSubmission::STATUS_NEW, SellerSubmission::STATUS_IN_REVIEW], true))
+                    ->action(fn (SellerSubmission $record) => self::transition($record, SellerSubmission::STATUS_APPROVED)),
+
+                Tables\Actions\Action::make('reject')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->visible(fn (SellerSubmission $record): bool => in_array($record->status, [SellerSubmission::STATUS_NEW, SellerSubmission::STATUS_IN_REVIEW], true))
+                    ->action(fn (SellerSubmission $record) => self::transition($record, SellerSubmission::STATUS_REJECTED)),
+
+                // Publish path: only on APPROVED rows. Links to the ProductResource create
+                // form to START a listing — the Product row is created MANUALLY there. We
+                // never auto-create a product and never add a table.
+                Tables\Actions\Action::make('create_listing')
+                    ->label('Create listing')
+                    ->icon('heroicon-o-rectangle-stack')
+                    ->color('success')
+                    ->visible(fn (SellerSubmission $record): bool => $record->status === SellerSubmission::STATUS_APPROVED)
+                    ->url(fn (SellerSubmission $record): string => self::productCreateUrl($record))
+                    ->openUrlInNewTab(),
             ]);
+    }
+
+    /**
+     * Apply a review-status transition and notify the admin. Pure status change —
+     * no side effects on products (publishing is a separate, manual step).
+     */
+    protected static function transition(SellerSubmission $record, string $status): void
+    {
+        $record->update(['status' => $status]);
+
+        Notification::make()
+            ->title('Submission marked "'.(self::$statuses[$status] ?? $status).'"')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * The publish path — a link to the ProductResource CREATE form that starts a
+     * listing from an approved submission. It NEVER creates a Product itself (that
+     * stays a manual admin step) and adds no table. The submission's details ride
+     * along as query params (title/links + a provenance `submission` id) so the
+     * create form can be pre-filled by a future Product-side wiring; today it is a
+     * one-click jump into the create screen. Non-null params only.
+     */
+    public static function productCreateUrl(SellerSubmission $record): string
+    {
+        return ProductResource::getUrl('create', array_filter([
+            'title' => $record->project_name,
+            'demo_url' => $record->url,
+            'submission' => $record->id,
+        ], fn ($value): bool => $value !== null && $value !== ''));
     }
 
     public static function getRelations(): array
