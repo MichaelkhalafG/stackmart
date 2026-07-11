@@ -18,6 +18,7 @@ export function AuthField({
   autoComplete,
   required,
   error,
+  hint,
 }: {
   id: string;
   label: string;
@@ -27,6 +28,8 @@ export function AuthField({
   autoComplete?: string;
   required?: boolean;
   error?: string;
+  /** Optional muted helper shown below the field when there is no error. */
+  hint?: string;
 }) {
   const errorId = `${id}-error`;
   return (
@@ -47,6 +50,8 @@ export function AuthField({
         <p id={errorId} className="text-xs text-destructive">
           {error}
         </p>
+      ) : hint ? (
+        <p className="text-xs text-fg-muted">{hint}</p>
       ) : null}
     </div>
   );
