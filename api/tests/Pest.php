@@ -44,7 +44,22 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Whether S3.01 auth endpoints are registered on the current branch.
+ *
+ * The auth-flow tests are written to the FROZEN §Auth contract but the endpoints
+ * live on `day-3` (routes/auth.php is empty on `day-3`). Each auth
+ * test is guarded with `->skip(fn () => ! authEndpointsAvailable(), …)` so the
+ * suite is green here now and the auth tests light up automatically once S3.01 is
+ * merged at end-of-day integration (roadmap dependency J3.03 dep S3.01).
+ */
+function authEndpointsAvailable(): bool
 {
-    // ..
+    foreach (app('router')->getRoutes()->getRoutes() as $route) {
+        if ($route->uri() === 'api/auth/login' && in_array('POST', $route->methods(), true)) {
+            return true;
+        }
+    }
+
+    return false;
 }

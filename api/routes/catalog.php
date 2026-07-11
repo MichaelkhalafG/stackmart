@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\SubmissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,3 +23,6 @@ Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
 
 // J2.03 — public category taxonomy (ordered by sort_order).
 Route::get('/categories', [CatalogController::class, 'categories']);
+
+// J3.01 — public seller submission (persists status=new, fires SubmissionReceived).
+Route::post('/submissions', [SubmissionController::class, 'store']);
