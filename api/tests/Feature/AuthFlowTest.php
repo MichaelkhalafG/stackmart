@@ -86,6 +86,13 @@ it('revokes the current token on logout', function () {
 
     $this->withToken($token)->postJson('/api/auth/logout')->assertSuccessful();
 
+    // The Sanctum guard caches the resolved user on the AuthManager for the lifetime of the
+    // app instance, which — unlike separate real HTTP requests — spans every request within a
+    // single test. Forget the guards so the next request re-resolves the Bearer token from the
+    // database (where logout just deleted it) instead of returning the cached user. The token
+    // is genuinely revoked server-side; this only defeats the in-test guard cache.
+    $this->app['auth']->forgetGuards();
+
     // ...and is revoked after (401 on a guarded route).
     $this->withToken($token)->getJson('/api/auth/me')->assertUnauthorized();
 })->skip($authAvailable, $reason);
