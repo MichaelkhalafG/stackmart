@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +27,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
     // (J4.01, this cycle) registers GET /orders + GET /orders/{id} here (shared group).
-    // later adds GET /orders/{id}/download (S4.04) in this same group.
+
+    // S4.04 — authenticated deliverable download (owner + paid; streams the private ZIP;
+    // increments download_count). Order bound by numeric id.
+    Route::get('/orders/{order}/download', [DownloadController::class, 'show']);
 });
 
 // S4.02 — provider webhook. NO user auth (verified inside PaymentProvider::handleWebhook).
