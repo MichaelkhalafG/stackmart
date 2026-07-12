@@ -10,13 +10,10 @@ use Laravel\Sanctum\Sanctum;
  * Download authorization (S4.04) — GET /api/orders/{id}/download.
  * Written to the FROZEN §Buyer download contract (Planning/12_API_Specification.md):
  * owner + status=paid → 200 application/zip attachment + download_count++, else 403.
- * The download endpoint lives on `day-4`; on THIS branch the file SKIPS and runs
- * automatically once S4.04 merges at integration (roadmap J4.03 dep S4.04). NEVER stubs
- * the endpoint; NEVER names a gateway. Engine-agnostic assertions.
+ * The download endpoint is merged on dev@day-4, so these run unconditionally now
+ * (J5.03 un-skipped the cross-branch guard). NEVER stubs the endpoint; NEVER names a
+ * gateway. Engine-agnostic assertions.
  */
-
-$skip = fn (): bool => ! downloadAvailable();
-$reason = 'S4.04 download endpoint lands on day-4 — green after end-of-day integration.';
 
 // A published product with a real deliverable file on the private `deliverables` disk, so a
 // paid owner's download can actually stream. Storage::fake keeps it in memory (nothing on disk).
@@ -31,15 +28,15 @@ function paidOrderWithDeliverable(User $buyer): Order
     return Order::factory()->for($buyer)->for($product)->paid()->create();
 }
 
-it('forbids a non-owner from downloading (403)', function () use ($skip, $reason) {
+it('forbids a non-owner from downloading (403)', function () {
     $owner = User::factory()->create();
     $order = paidOrderWithDeliverable($owner);
 
     Sanctum::actingAs(User::factory()->create()); // a different buyer
     $this->getJson("/api/orders/{$order->id}/download")->assertForbidden();
-})->skip($skip, $reason);
+});
 
-it('forbids the owner from downloading an unpaid order (403)', function () use ($skip, $reason) {
+it('forbids the owner from downloading an unpaid order (403)', function () {
     Storage::fake('deliverables');
     $path = 'deliverables/'.uniqid('kit_', true).'.zip';
     Storage::disk('deliverables')->put($path, 'PK-fake-zip-bytes');
@@ -50,9 +47,9 @@ it('forbids the owner from downloading an unpaid order (403)', function () use (
 
     Sanctum::actingAs($owner);
     $this->getJson("/api/orders/{$order->id}/download")->assertForbidden();
-})->skip($skip, $reason);
+});
 
-it('streams the zip for the owner of a paid order and increments download_count', function () use ($skip, $reason) {
+it('streams the zip for the owner of a paid order and increments download_count', function () {
     $owner = User::factory()->create();
     $order = paidOrderWithDeliverable($owner);
     expect($order->download_count)->toBe(0);
@@ -68,4 +65,26 @@ it('streams the zip for the owner of a paid order and increments download_count'
     // A second successful download increments again.
     $this->get("/api/orders/{$order->id}/download")->assertOk();
     expect($order->fresh()->download_count)->toBe(2);
-})->skip($skip, $reason);
+});
+
+it('forbids the owner from downloading a refunded order (403)', function () {
+    Storage::fake('deliverables');
+    $path = 'deliverables/'.uniqid('kit_', true).'.zip';
+    Storage::disk('deliverables')->put($path, 'PK-fake-zip-bytes');
+
+    $owner = User::factory()->create();
+    $product = Product::factory()->published()->create(['deliverable_path' => $path]);
+    // Refunded ≠ paid → no download entitlement (owner + status=paid is required).
+    $order = Order::factory()->for($owner)->for($product)->paid()->create(['status' => Order::STATUS_REFUNDED]);
+
+    Sanctum::actingAs($owner);
+    $this->getJson("/api/orders/{$order->id}/download")->assertForbidden();
+    expect($order->fresh()->download_count)->toBe(0); // a 403 must not increment
+});
+
+it('requires authentication to download (401)', function () {
+    $order = paidOrderWithDeliverable(User::factory()->create());
+
+    // No Sanctum::actingAs → the auth:sanctum guard rejects with 401.
+    $this->getJson("/api/orders/{$order->id}/download")->assertUnauthorized();
+});

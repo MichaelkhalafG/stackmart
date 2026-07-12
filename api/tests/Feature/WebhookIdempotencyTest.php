@@ -10,16 +10,10 @@ use Illuminate\Support\Facades\Mail;
  * Webhook idempotency (S4.02 + FulfillOrder S4.03) — POST /api/webhooks/payment.
  * Written to the FROZEN §Webhook contract (Planning/12_API_Specification.md) against
  * the REAL FakePaymentProvider flow (payload { ref, status } → PaymentEvent → FulfillOrder).
- * The webhook + FulfillOrder live on `day-4`; on THIS branch the file SKIPS and
- * runs automatically once S4.02/S4.03 merge at integration (roadmap J4.03 dep S4.02/S4.03).
- * NEVER stubs the endpoint; NEVER names a gateway. Engine-agnostic assertions.
- *
- * `OrderDelivered::class` is a compile-time string (no autoload) so referencing it is safe
- * even before mailable exists on this branch — the body only runs when unskipped.
+ * The webhook + FulfillOrder are merged on dev@day-4, so these run unconditionally now
+ * (J5.03 un-skipped the cross-branch guard). NEVER stubs the endpoint; NEVER names a
+ * gateway. Engine-agnostic assertions.
  */
-
-$skip = fn (): bool => ! webhookAvailable();
-$reason = 'S4.02/S4.03 webhook + FulfillOrder land on day-4 — green after end-of-day integration.';
 
 $licensePattern = '/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/';
 
@@ -29,7 +23,7 @@ function paidWebhookPayloadFor(Order $order): array
     return ['ref' => $order->provider_reference, 'status' => 'paid'];
 }
 
-it('fulfils a pending order on a paid webhook event', function () use ($skip, $reason, $licensePattern) {
+it('fulfils a pending order on a paid webhook event', function () use ($licensePattern) {
     Mail::fake();
     $order = Order::factory()->for(User::factory())->for(Product::factory()->published())->create();
     expect($order->status)->toBe(Order::STATUS_PENDING);
@@ -42,9 +36,9 @@ it('fulfils a pending order on a paid webhook event', function () use ($skip, $r
         ->and($order->delivered_at)->not->toBeNull();
 
     Mail::assertSent(OrderDelivered::class, 1); // delivered exactly once
-})->skip($skip, $reason);
+});
 
-it('is idempotent — a duplicate webhook event does not double-fulfil', function () use ($skip, $reason) {
+it('is idempotent — a duplicate webhook event does not double-fulfil', function () {
     Mail::fake();
     $order = Order::factory()->for(User::factory())->for(Product::factory()->published())->create();
     $ref = $order->provider_reference;
@@ -67,4 +61,4 @@ it('is idempotent — a duplicate webhook event does not double-fulfil', functio
     // Exactly one order row for this reference (unique provider_reference holds) and one mail total.
     expect(Order::where('provider_reference', $ref)->count())->toBe(1);
     Mail::assertSent(OrderDelivered::class, 1);
-})->skip($skip, $reason);
+});
