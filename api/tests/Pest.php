@@ -63,3 +63,24 @@ function authEndpointsAvailable(): bool
 
     return false;
 }
+
+/**
+ * Whether S4.01 checkout endpoint is registered on the current branch.
+ *
+ * `CheckoutTest` is written to the FROZEN §Buyer contract (POST /api/checkout →
+ * pending order + redirect url) against the REAL FakePaymentProvider, but the
+ * endpoint lives on `day-4` (routes/commerce.php has no checkout route on
+ * `day-4`). The file is guarded with `->skip(fn () => ! checkoutAvailable(), …)`
+ * so the suite is green here now and the checkout tests light up automatically once
+ * S4.01 is merged at end-of-day integration (roadmap dependency J4.02 dep S4.01).
+ */
+function checkoutAvailable(): bool
+{
+    foreach (app('router')->getRoutes()->getRoutes() as $route) {
+        if ($route->uri() === 'api/checkout' && in_array('POST', $route->methods(), true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
