@@ -30,7 +30,7 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger -- JSON-LD needs raw script content; `<` is escaped
+      // JSON-LD needs raw script content; `<` is escaped so dynamic text can't break out.
       dangerouslySetInnerHTML={{ __html: serialize(data) }}
     />
   );

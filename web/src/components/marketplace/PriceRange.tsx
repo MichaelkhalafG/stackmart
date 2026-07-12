@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -33,10 +33,17 @@ export function PriceRange({
     toDollars(maxCents, MAX_DOLLARS),
   ]);
 
-  // Keep in sync when the URL changes externally (back/forward, clear filters).
-  useEffect(() => {
+  // Reset the local range when the URL params change externally (back/forward, clear filters) by
+  // adjusting state DURING render — React's recommended alternative to a setState-in-effect sync
+  // (https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes).
+  // We track the last props we synced from; when they differ, we update once (no cascading effect).
+  const [syncedMin, setSyncedMin] = useState(minCents);
+  const [syncedMax, setSyncedMax] = useState(maxCents);
+  if (minCents !== syncedMin || maxCents !== syncedMax) {
+    setSyncedMin(minCents);
+    setSyncedMax(maxCents);
     setRange([toDollars(minCents, 0), toDollars(maxCents, MAX_DOLLARS)]);
-  }, [minCents, maxCents]);
+  }
 
   const commit = (next: [number, number]) => {
     const lo = Math.max(0, Math.min(next[0], next[1]));
