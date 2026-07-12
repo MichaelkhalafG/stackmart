@@ -9,7 +9,8 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the frozen catalog contract.
      *
-     * Order matters: categories must exist before ProductSeeder resolves category_id by slug.
+     * Order matters: categories before ProductSeeder (resolves category_id by slug);
+     * users + products before OrderSeeder (orders reference both).
      */
     public function run(): void
     {
@@ -17,6 +18,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             UserSeeder::class,
+            OrderSeeder::class,
             SellerSubmissionSeeder::class,
         ]);
     }
