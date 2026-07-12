@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,3 +17,12 @@ use Illuminate\Support\Facades\Route;
 | Provider stays behind the PaymentProvider contract (app/Payments, S1.07) — never
 | name a gateway here. Intentionally EMPTY on Day 1 — the fills these in.
 */
+
+// J4.01 — buyer's orders READ API (Bearer). SHARED FILE this cycle: the
+// adds checkout/webhook/download here too — keep BOTH sides at integration.
+Route::middleware('auth:sanctum')->group(function () {
+    // Buyer's own orders, newest first.
+    Route::get('/orders', [OrderController::class, 'index']);
+    // Single order by numeric id OR provider_reference; owner-only (else 403).
+    Route::get('/orders/{order}', [OrderController::class, 'show']);
+});
