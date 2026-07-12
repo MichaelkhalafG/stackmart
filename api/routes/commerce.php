@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,3 +28,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // (J4.01, this cycle) registers GET /orders + GET /orders/{id} here (shared group).
     // later adds GET /orders/{id}/download (S4.04) in this same group.
 });
+
+// S4.02 — provider webhook. NO user auth (verified inside PaymentProvider::handleWebhook).
+// On a verified `paid` event → FulfillOrder; idempotent (row-locked status guard); always 200.
+Route::post('/webhooks/payment', [WebhookController::class, 'handle']);
