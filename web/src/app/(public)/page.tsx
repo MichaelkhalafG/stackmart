@@ -7,6 +7,7 @@ import { Hero } from "@/components/home/Hero";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { SellCta } from "@/components/home/SellCta";
 import { TrustStrip } from "@/components/home/TrustStrip";
+import { DEFAULT_OG_IMAGE, OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/JsonLd";
 import type { ProductListItem } from "@/components/product/MarketplaceCard";
 
 const HOME_DESCRIPTION =
@@ -22,11 +23,13 @@ export const metadata: Metadata = {
     title: "STACKMART — buy ready-made micro-SaaS",
     description: HOME_DESCRIPTION,
     siteName: "STACKMART",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "STACKMART — buy ready-made micro-SaaS",
     description: HOME_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -82,6 +85,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <WebsiteJsonLd />
+      <OrganizationJsonLd />
       <Hero />
       <FeaturedListings products={featured} />
       <CategoryStrip categories={categories} />

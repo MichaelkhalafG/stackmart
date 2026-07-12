@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { SellForm } from "@/components/sell/SellForm";
+import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 const SELL_DESCRIPTION =
   "Sell your micro-SaaS, web app, or codebase on STACKMART. Submit your project for review — no account needed. Our team vets every submission and follows up by email.";
@@ -15,11 +16,13 @@ export const metadata: Metadata = {
     title: "Sell your project on STACKMART",
     description: SELL_DESCRIPTION,
     siteName: "STACKMART",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sell your project on STACKMART",
     description: SELL_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
