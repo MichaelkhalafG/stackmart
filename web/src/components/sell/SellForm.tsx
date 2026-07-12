@@ -7,6 +7,7 @@ import { PackageCheck } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -124,7 +125,7 @@ export function SellForm() {
 
   if (mutation.isSuccess) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl bg-card p-8 text-center ring-1 ring-foreground/10">
+      <Card className="items-center gap-3 p-8 text-center">
         <PackageCheck className="size-9 text-accent" aria-hidden />
         <h2 className="text-lg font-semibold text-fg">
           {mutation.data.message || "Submission received."}
@@ -141,21 +142,22 @@ export function SellForm() {
             Browse the marketplace
           </Link>
         </div>
-      </div>
+      </Card>
     );
   }
 
   const descriptionError = fieldErrors?.description?.[0];
 
   return (
-    <form
-      noValidate
-      className="flex flex-col gap-5 rounded-xl bg-card p-6 ring-1 ring-foreground/10"
-      onSubmit={(event) => {
-        event.preventDefault();
-        mutation.mutate();
-      }}
-    >
+    <Card className="gap-0 p-0">
+      <form
+        noValidate
+        className="flex flex-col gap-5 p-6"
+        onSubmit={(event) => {
+          event.preventDefault();
+          mutation.mutate();
+        }}
+      >
       {generalError ? <FormError message={generalError} /> : null}
 
       <AuthField
@@ -233,9 +235,10 @@ export function SellForm() {
         ) : null}
       </div>
 
-      <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full sm:w-auto sm:self-start">
-        {mutation.isPending ? "Submitting…" : "Submit project"}
-      </Button>
-    </form>
+        <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full sm:w-auto sm:self-start">
+          {mutation.isPending ? "Submitting…" : "Submit project"}
+        </Button>
+      </form>
+    </Card>
   );
 }
