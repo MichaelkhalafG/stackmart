@@ -24,6 +24,8 @@ class LatestSubmissions extends BaseWidget
     {
         return $table
             ->query(SellerSubmission::query()->latest())
+            ->emptyStateIcon('heroicon-o-inbox')
+            ->emptyStateHeading('No submissions yet')
             ->paginated([5, 10, 25])
             ->defaultPaginationPageOption(5)
             ->columns([

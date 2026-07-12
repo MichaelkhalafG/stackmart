@@ -24,7 +24,9 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationGroup = 'Sales';
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'provider_reference';
 
@@ -120,6 +122,9 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->emptyStateIcon('heroicon-o-shopping-bag')
+            ->emptyStateHeading('No orders yet')
+            ->emptyStateDescription('Orders appear here once a buyer completes checkout.')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(self::$statuses),
             ])
