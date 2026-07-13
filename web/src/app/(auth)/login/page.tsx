@@ -12,11 +12,11 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthShell
-      title="Sign in to STACKMART"
+      title="Sign in to MDN STACKMART"
       subtitle="Access your purchases and license keys."
       footer={
         <>
-          New to STACKMART?{" "}
+          New to MDN STACKMART?{" "}
           <Link href="/register" className="font-medium text-accent hover:underline">
             Create an account
           </Link>

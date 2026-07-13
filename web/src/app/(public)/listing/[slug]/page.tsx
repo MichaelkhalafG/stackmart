@@ -63,7 +63,7 @@ export async function generateMetadata({
       url: `/listing/${product.slug}`,
       title: product.title,
       description,
-      siteName: "STACKMART",
+      siteName: "MDN STACKMART",
       images: ogImages,
     },
     twitter: {

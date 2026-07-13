@@ -7,11 +7,14 @@ import { ImageResponse } from "next/og";
  * self-contained per the task rule). Styled with the brand tokens from Planning/06_UI_System.md
  * (navy canvas + the lavender/royal/amber "stacked layers" mark). PNG output, 1200×630.
  */
-export const alt = "STACKMART — a curated marketplace for ready-made micro-SaaS";
+export const alt = "MDN STACKMART — a curated marketplace for ready-made micro-SaaS";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const NAVY = "#0c2239";
+// Hex literals, not tokens: satori renders outside the DOM and cannot resolve the CSS
+// variables in globals.css. Keep these in sync with Planning/06_UI_System.md by hand.
+const NAVY = "#032b42";
+const NAVY_EMPHASIS = "#021d2e";
 const CANVAS = "#ffffff";
 const MUTED = "#9aa4b2";
 const BARS = ["#dee0ff", "#010ed0", "#fbb002"] as const;
@@ -41,7 +44,7 @@ export default function OpengraphImage() {
               gap: 12,
               width: 96,
               height: 96,
-              background: "#0a0d31",
+              background: NAVY_EMPHASIS,
               borderRadius: 18,
               padding: "22px 18px",
               justifyContent: "center",
@@ -59,7 +62,7 @@ export default function OpengraphImage() {
               letterSpacing: "-0.02em",
             }}
           >
-            STACKMART
+            MDN STACKMART
           </div>
         </div>
 

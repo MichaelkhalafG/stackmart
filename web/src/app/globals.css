@@ -30,12 +30,12 @@
   --fg: #1f2328;               /* primary text */
   --fg-muted: #5f6567;         /* help text, secondary labels, metadata */
   --accent: #010ed0;           /* royal blue — links, focus ring, active nav, interactive/hover */
-  --primary: #0c2239;          /* navy — Buy Now + solid actions + dark headers (the ONLY primary action) */
-  --primary-emphasis: #0a0d31; /* darker navy — hover / emphasis on solid actions & dark headers */
+  --primary: #032b42;          /* navy — Buy Now + solid actions + dark headers (the ONLY primary action) */
+  --primary-emphasis: #021d2e; /* darker navy — hover / emphasis on solid actions & dark headers */
   --highlight: #fbb002;        /* amber — sparing badge/highlight FILLS only; never a button, body text, or large fill (fails AA as text on white) */
   --danger: #cf222e;           /* validation errors, destructive */
   --tag-bg: #dee0ff;           /* lavender — tag/chip background */
-  --tag-fg: #0c2239;           /* navy — tag/chip text on lavender */
+  --tag-fg: #032b42;           /* navy — tag/chip text on lavender */
 
   /* Shape & space (06 §1): 6px radius, 1px borders, near-zero shadows, 4/8px scale, 1280 container */
   --radius: 6px;

@@ -9,8 +9,8 @@ import { Container } from "@/components/layout/Container";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "STACKMART — buy ready-made micro-SaaS",
-    template: "%s · STACKMART",
+    default: "MDN STACKMART — buy ready-made micro-SaaS",
+    template: "%s · MDN STACKMART",
   },
   description:
     "A curated marketplace for ready-made micro-SaaS products, web apps, and codebases — evaluate via live demo and repository links, then buy instantly.",

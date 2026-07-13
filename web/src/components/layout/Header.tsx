@@ -39,7 +39,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border bg-canvas">
       <Container className="flex h-14 items-center gap-3">
         <Link href="/" className="shrink-0 text-base font-semibold tracking-tight text-fg">
-          STACKMART
+          MDN STACKMART
         </Link>
 
         {/* Search (center) — shadcn Input as-is */}

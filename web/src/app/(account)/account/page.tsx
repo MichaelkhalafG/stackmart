@@ -21,7 +21,7 @@ export default function AccountPage() {
     <div className="py-2">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-fg">Your account</h1>
-        <p className="text-sm text-fg-muted">Manage your STACKMART profile and purchases.</p>
+        <p className="text-sm text-fg-muted">Manage your MDN STACKMART profile and purchases.</p>
       </header>
 
       <Card className="max-w-md">

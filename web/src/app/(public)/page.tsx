@@ -20,14 +20,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    title: "STACKMART — buy ready-made micro-SaaS",
+    title: "MDN STACKMART — buy ready-made micro-SaaS",
     description: HOME_DESCRIPTION,
-    siteName: "STACKMART",
+    siteName: "MDN STACKMART",
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "STACKMART — buy ready-made micro-SaaS",
+    title: "MDN STACKMART — buy ready-made micro-SaaS",
     description: HOME_DESCRIPTION,
     images: [DEFAULT_OG_IMAGE],
   },
