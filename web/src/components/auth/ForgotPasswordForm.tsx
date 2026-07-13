@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import { MailCheck } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { AuthField, FormError } from "./AuthField";
@@ -35,10 +35,14 @@ export function ForgotPasswordForm() {
 
   if (mutation.isSuccess) {
     return (
-      <div className="flex flex-col items-center gap-3 text-center">
-        <MailCheck className="size-8 text-accent" aria-hidden />
-        <p className="text-sm text-fg-muted">{GENERIC_MESSAGE}</p>
-        <Link href="/login" className="text-sm font-medium text-accent hover:underline">
+      <div className="anim-fade flex flex-col gap-5">
+        <Alert variant="success" title="Check your inbox">
+          {GENERIC_MESSAGE}
+        </Alert>
+        <Link
+          href="/login"
+          className="text-center text-sm font-medium text-accent hover:underline"
+        >
           Back to sign in
         </Link>
       </div>
@@ -65,8 +69,8 @@ export function ForgotPasswordForm() {
         onChange={setEmail}
         error={fieldErrors?.email?.[0]}
       />
-      <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full">
-        {mutation.isPending ? "Sending…" : "Send reset link"}
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
+        Send reset link
       </Button>
     </form>
   );

@@ -26,6 +26,7 @@ export default function CheckoutError({
         title="Checkout hit a snag"
         description="We couldn't complete this step. Try again, or return to your purchases."
         reset={reset}
+        code={error.digest}
         homeHref="/account/purchases"
         homeLabel="Go to purchases"
       />

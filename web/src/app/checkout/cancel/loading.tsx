@@ -1,10 +1,13 @@
-// Loading skeleton stub (S1.03 scaffold). Real page implementation lands in Day 2+.
-export default function Loading() {
+import { LoadingState } from "@/components/states/LoadingState";
+
+/**
+ * `/checkout/cancel` loading — the reference §04 loading card at the cancel page's centered
+ * measure (max-w-md), so the swap to the cancelled card doesn't jump. Container from the layout.
+ */
+export default function CheckoutCancelLoading() {
   return (
-    <div className="animate-pulse p-6" aria-busy="true" aria-label="Loading">
-      <div className="h-8 w-48 rounded-md bg-muted" />
-      <div className="mt-4 h-4 w-full max-w-2xl rounded bg-muted" />
-      <div className="mt-2 h-4 w-2/3 rounded bg-muted" />
+    <div className="mx-auto max-w-md py-16" aria-busy="true" aria-label="Loading">
+      <LoadingState label="loading" />
     </div>
   );
 }

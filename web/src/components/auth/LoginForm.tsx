@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 
@@ -68,9 +69,17 @@ export function LoginForm() {
         value={password}
         onChange={setPassword}
         error={fieldErrors?.password?.[0]}
+        labelSuffix={
+          <Link
+            href="/forgot-password"
+            className="text-[12.5px] font-medium text-accent hover:underline"
+          >
+            Forgot?
+          </Link>
+        }
       />
-      <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full">
-        {mutation.isPending ? "Signing in…" : "Sign in"}
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
+        Sign in
       </Button>
     </form>
   );

@@ -53,7 +53,7 @@ export function RegisterForm() {
       {generalError ? <FormError message={generalError} /> : null}
       <AuthField
         id="name"
-        label="Name"
+        label="Full name"
         autoComplete="name"
         required
         value={name}
@@ -80,8 +80,8 @@ export function RegisterForm() {
         onChange={setPassword}
         error={fieldErrors?.password?.[0]}
       />
-      <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full">
-        {mutation.isPending ? "Creating account…" : "Create account"}
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
+        Create account
       </Button>
     </form>
   );
