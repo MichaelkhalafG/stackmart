@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
-import { productImageUrl } from "@/lib/imageUrl";
+import { productImageOrDefault } from "@/lib/imageUrl";
 
 /** One category as embedded in a product list/detail payload (12_API_Specification.md). */
 export type ProductCategory = { id: number; name: string; slug: string };
@@ -41,7 +41,8 @@ export function formatPrice(cents: number, currency = "USD"): string {
  * pattern dependency) and a subtle fallback when a product has no image.
  */
 export function MarketplaceCard({ product }: { product: ProductListItem }) {
-  const cover = productImageUrl(product.cover_image);
+  // Always renderable: a real image, else the single shared default (never an empty/coloured tile).
+  const cover = productImageOrDefault(product.cover_image);
   return (
     <Card className="group/mkt-card gap-0 p-0 transition-colors hover:ring-foreground/20">
       <Link
@@ -49,19 +50,13 @@ export function MarketplaceCard({ product }: { product: ProductListItem }) {
         className="flex h-full flex-col rounded-[inherit] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         <div className="relative aspect-[16/9] w-full overflow-hidden border-b border-border bg-canvas-subtle">
-          {cover ? (
-            <Image
-              src={cover}
-              alt={product.title}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-200 group-hover/mkt-card:scale-[1.02]"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center px-4 text-center">
-              <span className="mono text-xs text-fg-muted">{product.title}</span>
-            </div>
-          )}
+          <Image
+            src={cover}
+            alt={product.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-200 group-hover/mkt-card:scale-[1.02]"
+          />
         </div>
 
         <div className="flex flex-1 flex-col gap-2 p-4">

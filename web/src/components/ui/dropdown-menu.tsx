@@ -32,8 +32,15 @@ function DropdownMenuContent({
   >) {
   return (
     <MenuPrimitive.Portal>
+      {/*
+        Popup layer must sit ABOVE every app layer. The site uses z-[60] (sticky header),
+        z-[70] (mega-menu) and z-[90] (mobile drawer); the stock `z-50` here left the menu
+        underneath them and behind the landing's own stacked/painted sections. z-[100] puts it
+        on top of everything. `isolate` is dropped: it created a stacking context on the
+        positioner for no benefit and only complicated the layering.
+      */}
       <MenuPrimitive.Positioner
-        className="isolate z-50 outline-none"
+        className="z-[100] outline-none"
         align={align}
         alignOffset={alignOffset}
         side={side}

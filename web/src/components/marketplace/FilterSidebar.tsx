@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import type { Category } from "@/components/home/CategoryStrip";
+import type { Category } from "@/lib/catalog";
 
 import { PriceRange } from "./PriceRange";
 

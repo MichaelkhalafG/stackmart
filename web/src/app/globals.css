@@ -33,6 +33,7 @@
   --fg: #1f2328;               /* primary text */
   --fg-muted: #5f6567;         /* help text, secondary labels, metadata */
   --accent: #010ed0;           /* royal blue — links, focus ring, active nav, interactive/hover + badges/highlights/stat numbers/"Featured" pills (fill + white text) */
+  --accent-soft: #6b7bff;      /* violet-tinted royal blue — the TERMINUS of the hero headline gradient only (never a fill, text, or border colour on its own) */
   --primary: #032b42;          /* navy — Buy Now + solid actions + dark headers (the ONLY primary action) */
   --primary-emphasis: #021d2e; /* darker navy — hover / emphasis on solid actions & dark headers */
   /* --highlight (amber #fbb002) RETIRED — removed from the palette (06 §1).
@@ -161,6 +162,261 @@
   a {
     color: var(--accent);
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   LANDING DESIGN SYSTEM (feat/landing-redesign)
+
+   Keyframes, gradient meshes and depth shadows for the approved landing design.
+   Every colour below is derived from a TOKEN via color-mix() — no hardcoded hex.
+   The design's rgba() literals map 1:1: rgba(1,14,208,x) → --accent at x%,
+   rgba(3,43,66,x) → --primary at x%, rgba(255,255,255,x) → --canvas at x%.
+
+   NOTE: the design deliberately uses real elevation (large soft shadows), which is a
+   considered departure from 06 §1's "near-zero shadows" rule for the marketing surface.
+   The app UI (cards/tables/forms) keeps the flat Primer treatment.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@keyframes sm-float-a {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-12px) rotate(-1deg); }
+}
+@keyframes sm-float-b {
+  0%, 100% { transform: translateY(0) rotate(1.5deg); }
+  50% { transform: translateY(9px) rotate(1.5deg); }
+}
+@keyframes sm-float-c {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes sm-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  50% { opacity: 0.4; box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@keyframes sm-blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+@keyframes sm-spin { to { transform: rotate(360deg); } }
+/* Slow drift for the how-it-works code backdrop (alternating, so it never jump-cuts). */
+@keyframes sm-drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-38px); }
+}
+@keyframes sm-fade {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sm-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@layer components {
+  /* Animations (design spec timings). */
+  .anim-float-a { animation: sm-float-a 7s ease-in-out infinite; }
+  .anim-float-b { animation: sm-float-b 8s ease-in-out infinite; }
+  .anim-float-c { animation: sm-float-c 9s ease-in-out infinite; }
+  .anim-pulse-dot { animation: sm-pulse 1.6s ease-in-out infinite; }
+  .anim-blink { animation: sm-blink 1s step-end infinite; }
+  .anim-spin-ring { animation: sm-spin 1.4s linear infinite; }
+  .anim-fade { animation: sm-fade 0.16s ease; }
+  .anim-slide-in { animation: sm-slide-in 0.22s ease; }
+
+  /* Hero: lavender halo behind the copy column. */
+  .mesh-hero {
+    background: radial-gradient(
+      60% 80% at 92% 0%,
+      color-mix(in srgb, var(--tag-bg) 50%, transparent),
+      transparent 60%
+    );
+  }
+
+  /* Hero visual: navy panel with royal-blue mesh. */
+  .mesh-hero-visual {
+    background-color: var(--primary-emphasis);
+    background-image:
+      radial-gradient(55% 55% at 12% 18%, color-mix(in srgb, var(--accent) 50%, transparent), transparent 60%),
+      radial-gradient(45% 45% at 88% 12%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 55%),
+      radial-gradient(70% 70% at 78% 92%, color-mix(in srgb, var(--primary) 70%, transparent), transparent 60%),
+      linear-gradient(150deg, var(--primary), var(--primary-emphasis));
+  }
+
+  /* Stats band + categories band: subtle canvas mesh. */
+  .mesh-stats {
+    background-color: var(--canvas-subtle);
+    background-image:
+      radial-gradient(45% 70% at 8% 0%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+      radial-gradient(50% 80% at 92% 30%, color-mix(in srgb, var(--tag-bg) 55%, transparent), transparent 62%),
+      radial-gradient(60% 90% at 60% 112%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+  }
+  .mesh-categories {
+    background-color: var(--canvas-subtle);
+    background-image:
+      radial-gradient(50% 70% at 95% 5%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
+      radial-gradient(45% 65% at 5% 40%, color-mix(in srgb, var(--tag-bg) 50%, transparent), transparent 62%),
+      radial-gradient(60% 80% at 70% 110%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+  }
+
+  /* Hero headline gradient — royal blue → violet tint, clipped to the glyphs.
+     `-webkit-text-fill-color` is required alongside `color` for WebKit/Safari. */
+  .text-gradient-accent {
+    background-image: linear-gradient(100deg, var(--accent), var(--accent-soft));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ── How-it-works: a restrained "live coding" backdrop ────────────────────────────────
+     Replaces the old flat lavender fill. Four layers, all token-derived:
+       1. .how-base     — a soft gradient base (never one flat grey): lavender bloom → canvas.
+       2. .how-backdrop — wrapper carrying a radial mask so the motif is STRONGER AT THE EDGES and
+                          fades to nothing behind the heading and the three cards (readability).
+       3. .how-grid     — a faint navy technical grid.
+       4. .how-code     — low-opacity IBM Plex Mono code/terminal text + bracket glyphs.
+     Nothing here exceeds ~6-7% ink, so the white step cards always sit clearly on top. */
+  .how-base {
+    background-image:
+      radial-gradient(
+        120% 85% at 50% -15%,
+        color-mix(in srgb, var(--tag-bg) 60%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 60% at 100% 100%,
+        color-mix(in srgb, var(--accent) 5%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(180deg, var(--canvas), var(--canvas-subtle));
+  }
+
+  /* The radial mask is scoped to the GRID only. It used to sit on the whole backdrop wrapper, which
+     meant it was also fading out the code columns — that (on top of a low opacity) is why the code
+     was barely visible. The grid still calms down behind the heading/cards; the code text now reads
+     at its own opacity, and it lives in the outer margins beside the cards anyway. */
+  .how-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--primary) 10%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: radial-gradient(72% 58% at 50% 48%, transparent 8%, black 82%);
+    mask-image: radial-gradient(72% 58% at 50% 48%, transparent 8%, black 82%);
+  }
+
+  /* Mono code text — the actual motif. Legibly present ("there is real code back there") while
+     staying far below the white step cards, which are opaque and therefore unaffected. */
+  .how-code {
+    color: var(--primary);
+    opacity: 0.16;
+  }
+  .how-code-accent {
+    color: var(--accent);
+    opacity: 0.16;
+  }
+
+  /* The oversized { } glyphs carry far more ink per element, so they sit a touch lower than the
+     code text — otherwise they'd dominate the section. */
+  .how-glyph {
+    color: var(--primary);
+    opacity: 0.1;
+  }
+
+  /* Very slow vertical drift — a "scrolling code" feel that never draws the eye. */
+  .anim-drift-slow {
+    animation: sm-drift 26s ease-in-out infinite alternate;
+  }
+  .anim-drift-slower {
+    animation: sm-drift 34s ease-in-out infinite alternate-reverse;
+  }
+
+  /* Seller CTA: deep navy mesh. */
+  .mesh-sell {
+    background-color: var(--primary-emphasis);
+    background-image:
+      radial-gradient(42% 60% at 12% 18%, color-mix(in srgb, var(--accent) 42%, transparent), transparent 60%),
+      radial-gradient(48% 70% at 88% 90%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 62%),
+      radial-gradient(60% 90% at 96% 0%, color-mix(in srgb, var(--primary) 85%, transparent), transparent 60%),
+      linear-gradient(150deg, var(--primary), var(--primary-emphasis));
+  }
+
+  /* Faint grid motif overlaid on the dark sections. */
+  .grid-motif-hero {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--canvas) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--canvas) 5%, transparent) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+  .grid-motif-sell {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--canvas) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--canvas) 4%, transparent) 1px, transparent 1px);
+    background-size: 42px 42px;
+  }
+
+  /* Depth shadows (design spec), all navy-tinted from --primary. */
+  .shadow-hero-visual { box-shadow: 0 40px 80px -30px color-mix(in srgb, var(--primary-emphasis) 60%, transparent); }
+  .shadow-float-sm { box-shadow: 0 16px 34px -16px color-mix(in srgb, var(--primary-emphasis) 55%, transparent); }
+  .shadow-float-md { box-shadow: 0 20px 40px -18px color-mix(in srgb, var(--primary-emphasis) 60%, transparent); }
+  .shadow-float-lg { box-shadow: 0 30px 56px -20px color-mix(in srgb, var(--primary-emphasis) 65%, transparent); }
+  .shadow-glass { box-shadow: 0 24px 48px -22px color-mix(in srgb, var(--primary-emphasis) 60%, transparent); }
+  .shadow-mega { box-shadow: 0 30px 60px -24px color-mix(in srgb, var(--primary) 40%, transparent); }
+  .shadow-drawer { box-shadow: -20px 0 50px -20px color-mix(in srgb, var(--primary) 50%, transparent); }
+  .shadow-header { box-shadow: 0 6px 24px -12px color-mix(in srgb, var(--primary) 28%, transparent); }
+  .shadow-chip { box-shadow: 0 12px 26px -10px color-mix(in srgb, var(--primary-emphasis) 70%, transparent); }
+  .shadow-preview { box-shadow: 0 12px 26px -14px color-mix(in srgb, var(--primary) 40%, transparent); }
+
+  /* Solid navy gradient used by the mega-menu promo card. */
+  .bg-navy-gradient {
+    background-image: linear-gradient(150deg, var(--primary), var(--primary-emphasis));
+  }
+
+  /* Royal-blue glow under the primary CTAs on hover (design spec). */
+  .shadow-cta-hover:hover {
+    box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .shadow-cta-hover-lg:hover {
+    box-shadow: 0 14px 34px -12px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  .shadow-cta-light:hover {
+    box-shadow: 0 16px 42px -12px color-mix(in srgb, var(--tag-bg) 55%, transparent);
+  }
+
+  /* Listing card: border + shadow lift on hover — NO transform, so there is zero layout shift. */
+  .listing-card {
+    transition: box-shadow 0.24s ease, border-color 0.24s ease;
+  }
+  .listing-card:hover {
+    box-shadow: 0 22px 44px -26px color-mix(in srgb, var(--primary) 30%, transparent);
+    border-color: var(--primary);
+  }
+
+  /* Category tile hover (design: border + shadow + 2px raise). */
+  .category-tile {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+  .category-tile:hover {
+    border-color: var(--primary);
+    box-shadow: 0 14px 30px -20px color-mix(in srgb, var(--primary) 45%, transparent);
+    transform: translateY(-2px);
+  }
+}
+
+/* Honour reduced-motion: keep the design, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-float-a,
+  .anim-float-b,
+  .anim-float-c,
+  .anim-pulse-dot,
+  .anim-blink,
+  .anim-spin-ring,
+  .anim-fade,
+  .anim-slide-in,
+  .anim-drift-slow,
+  .anim-drift-slower {
+    animation: none;
+  }
+  .category-tile:hover { transform: none; }
 }
 
 @layer components {

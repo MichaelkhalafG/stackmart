@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuthStore } from "@/store/auth";
+import { Container } from "@/components/layout/Container";
 
 /**
  * Guard for every /account* route (S3.03). The auth store persists to localStorage with
@@ -34,9 +35,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   // Until we know the real auth state (or while redirecting an anonymous visitor), show a
   // neutral placeholder rather than flashing protected content.
+  // The 1280px container now lives here (it moved out of the root layout so the landing can be
+  // full-bleed) — width and padding are unchanged for every /account route.
   if (!hydrated || !token) {
-    return <p className="py-16 text-sm text-fg-muted">Loading…</p>;
+    return (
+      <Container className="py-6">
+        <p className="py-16 text-sm text-fg-muted">Loading…</p>
+      </Container>
+    );
   }
 
-  return <>{children}</>;
+  return <Container className="py-6">{children}</Container>;
 }

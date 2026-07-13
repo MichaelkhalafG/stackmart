@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
 import { Blankslate } from "@/components/marketplace/Blankslate";
+import { Container } from "@/components/layout/Container";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,28 +30,32 @@ export function ErrorState({
   homeLabel?: string;
   extraAction?: ReactNode;
 }) {
+  // Self-contained container: error boundaries render directly under <main>, which is no longer
+  // wrapped in one (the landing is full-bleed), so the error UI supplies its own page width.
   return (
-    <Blankslate
-      icon={<AlertTriangle className="size-8" />}
-      title={title}
-      description={description}
-      action={
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {reset ? (
-            <button
-              type="button"
-              onClick={reset}
-              className={cn(buttonVariants({ variant: "outline" }))}
-            >
-              Try again
-            </button>
-          ) : null}
-          <Link href={homeHref} className={cn(buttonVariants({ variant: "outline" }))}>
-            {homeLabel}
-          </Link>
-          {extraAction}
-        </div>
-      }
-    />
+    <Container className="py-6">
+      <Blankslate
+        icon={<AlertTriangle className="size-8" />}
+        title={title}
+        description={description}
+        action={
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {reset ? (
+              <button
+                type="button"
+                onClick={reset}
+                className={cn(buttonVariants({ variant: "outline" }))}
+              >
+                Try again
+              </button>
+            ) : null}
+            <Link href={homeHref} className={cn(buttonVariants({ variant: "outline" }))}>
+              {homeLabel}
+            </Link>
+            {extraAction}
+          </div>
+        }
+      />
+    </Container>
   );
 }

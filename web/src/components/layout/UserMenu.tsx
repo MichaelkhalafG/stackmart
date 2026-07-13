@@ -10,6 +10,7 @@ import { useAuthStore, type User } from "@/store/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -60,13 +61,23 @@ export function UserMenu({ user }: { user: User }) {
         {initials(user.name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-52">
-        <DropdownMenuLabel className="flex flex-col gap-0.5">
-          <span className="truncate font-medium text-fg">{user.name}</span>
-          <span className="truncate text-xs font-normal text-fg-muted">{user.email}</span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/account" />}>Your account</DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/account/purchases" />}>Your purchases</DropdownMenuItem>
+        {/*
+          `DropdownMenuLabel` is Base UI's `Menu.GroupLabel`: it reads MenuGroupContext and THROWS
+          ("MenuGroupContext is missing") unless it is inside a `Menu.Group` (`DropdownMenuGroup`).
+          So the identity label + the account links it names live in one group. Sign out is a
+          standalone item (plain `Menu.Item` needs no group).
+        */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex flex-col gap-0.5">
+            <span className="truncate font-medium text-fg">{user.name}</span>
+            <span className="truncate text-xs font-normal text-fg-muted">{user.email}</span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem render={<Link href="/account" />}>Your account</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/account/purchases" />}>
+            Your purchases
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={signOut} disabled={signingOut}>
           <LogOut className="size-4" aria-hidden />
