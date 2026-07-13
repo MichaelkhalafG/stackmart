@@ -84,6 +84,87 @@ class SubmissionResource extends Resource
                         Forms\Components\Textarea::make('description')->disabled()->columnSpanFull()->rows(4),
                     ]),
 
+                // ── Listing metadata the seller supplied (DR-8) ──────────────────────────────
+                Forms\Components\Section::make('Listing details')
+                    ->description('What the seller says they are selling. Carried to the product on approval.')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Select::make('category_id')
+                            ->label('Category')
+                            ->relationship('category', 'name')
+                            ->disabled(),
+                        Forms\Components\Placeholder::make('tech_stack_display')
+                            ->label('Tech stack')
+                            ->content(fn (?SellerSubmission $record): string => $record === null || $record->flatTechStack() === []
+                                ? '—'
+                                : implode(' · ', $record->flatTechStack())),
+                        Forms\Components\Placeholder::make('metrics_display')
+                            ->label('Business metrics')
+                            ->columnSpanFull()
+                            ->content(function (?SellerSubmission $record): string {
+                                $metrics = $record?->metrics ?? [];
+
+                                if (! is_array($metrics) || $metrics === []) {
+                                    return '—';
+                                }
+
+                                $parts = [];
+                                foreach (['mrr' => 'MRR', 'users' => 'Users', 'traffic' => 'Monthly traffic'] as $key => $label) {
+                                    if (isset($metrics[$key]) && $metrics[$key] !== null && $metrics[$key] !== '') {
+                                        $parts[] = $label.': '.number_format((int) $metrics[$key]);
+                                    }
+                                }
+
+                                return $parts === [] ? '—' : implode(' · ', $parts);
+                            }),
+                    ]),
+
+                // ── Uploaded artefacts (PRIVATE disk — admin review only) ────────────────────
+                Forms\Components\Section::make('Submitted files')
+                    ->description('Stored on the private disk. Never public. Download to review before approving.')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Placeholder::make('deliverable_status')
+                            ->label('Code ZIP')
+                            ->content(fn (?SellerSubmission $record): string => $record?->deliverable_path
+                                ? 'Attached — use "Download ZIP" above.'
+                                : 'No file submitted.'),
+                        Forms\Components\Placeholder::make('readme_status')
+                            ->label('Verification README')
+                            ->content(fn (?SellerSubmission $record): string => $record?->readme_path
+                                ? 'Attached — use "Download README" above.'
+                                : 'No file submitted.'),
+                        Forms\Components\Placeholder::make('images_status')
+                            ->label('Product images')
+                            ->columnSpanFull()
+                            ->content(fn (?SellerSubmission $record): string => $record !== null && is_array($record->images) && $record->images !== []
+                                ? count($record->images).' image(s) — private until the listing is created, then copied to the public gallery.'
+                                : 'No images submitted.'),
+                    ]),
+
+                // ── Payout details (SENSITIVE — masked by default) ───────────────────────────
+                Forms\Components\Section::make('Payout details')
+                    ->description('Where MDN STACKMART transfers this seller\'s share after a sale. Masked — use "Reveal payout details" above to see the full identifier.')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Placeholder::make('payout_method_display')
+                            ->label('Method')
+                            ->content(fn (?SellerSubmission $record): string => match ($record?->payout_method) {
+                                SellerSubmission::PAYOUT_BANK => 'Bank transfer',
+                                SellerSubmission::PAYOUT_PAYPAL => 'PayPal',
+                                default => '—',
+                            }),
+                        Forms\Components\Placeholder::make('payout_holder_display')
+                            ->label('Account holder')
+                            ->content(fn (?SellerSubmission $record): string => $record?->payout_holder_name ?? '—'),
+                        Forms\Components\Placeholder::make('payout_identifier_display')
+                            ->label('Identifier')
+                            ->content(fn (?SellerSubmission $record): string => $record?->maskedPayoutIdentifier() ?? '—'),
+                        Forms\Components\Placeholder::make('payout_bank_display')
+                            ->label('Bank')
+                            ->content(fn (?SellerSubmission $record): string => $record?->payout_bank_name ?? '—'),
+                    ]),
+
                 Forms\Components\Section::make('Review')
                     ->columns(1)
                     ->schema([

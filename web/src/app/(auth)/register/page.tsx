@@ -16,8 +16,8 @@ export default function RegisterPage() {
       subtitle="Buy ready-made products and manage your license keys."
       footer={
         <>
-          Already have an account?{" "}
-          <Link href="/login" className="font-medium text-accent hover:underline">
+          Already have one?{" "}
+          <Link href="/login" className="font-semibold text-accent hover:underline">
             Sign in
           </Link>
         </>

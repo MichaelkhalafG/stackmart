@@ -26,6 +26,12 @@ class Product extends Model
      */
     protected $fillable = [
         'category_id',
+        // Seller provenance (DR-8) — denormalised from the submission at approval. There are no
+        // seller accounts, so this IS the seller record for payout purposes. NEVER public.
+        'seller_submission_id',
+        'seller_name',
+        'seller_email',
+        'commission_rate',
         'title',
         'slug',
         'tagline',
@@ -61,7 +67,33 @@ class Product extends Model
             'price_cents' => 'integer',
             'is_featured' => 'boolean',
             'published_at' => 'datetime',
+            'commission_rate' => 'decimal:3',
         ];
+    }
+
+    /**
+     * SENSITIVE — the seller's identity and the platform's cut are internal. `ProductResource`
+     * never exposes them; hiding them here means an accidental `->toArray()` can't leak them either.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'seller_submission_id',
+        'seller_name',
+        'seller_email',
+        'commission_rate',
+    ];
+
+    /**
+     * The seller submission this listing was created from (null for admin-authored listings).
+     * This is the ONLY place the seller's payout details live — the admin reads them from here at
+     * transfer time (DR-8).
+     *
+     * @return BelongsTo<SellerSubmission, $this>
+     */
+    public function sellerSubmission(): BelongsTo
+    {
+        return $this->belongsTo(SellerSubmission::class);
     }
 
     /**

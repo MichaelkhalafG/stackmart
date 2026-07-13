@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 
 import { apiUrl } from "@/lib/apiBase";
-import { productImageUrl } from "@/lib/imageUrl";
+import { isPlaceholderImage, productImageUrl } from "@/lib/imageUrl";
 import { FaqAccordion } from "@/components/listing/FaqAccordion";
 import { ListingGallery } from "@/components/listing/ListingGallery";
 import { MetricsGrid } from "@/components/listing/MetricsGrid";
@@ -50,8 +50,11 @@ export async function generateMetadata({
   if (!product) return { title: "Listing not found" };
 
   const description = product.tagline || product.description?.slice(0, 200);
-  const ogImage = productImageUrl(product.images?.[0]); // OG image = the product's FIRST image (normalized)
-  // Fall back to the site-wide branded OG card when a listing has no image (so og:image is never empty).
+  // OG image = the listing's first REAL image. A missing image — or a seeded coloured placeholder
+  // swatch — falls back to the site-wide branded OG card rather than shipping a flat colour tile
+  // as the social preview (so og:image is never empty and never a mock swatch).
+  const firstImage = product.images?.[0];
+  const ogImage = isPlaceholderImage(firstImage) ? null : productImageUrl(firstImage);
   const ogImages = ogImage ? [{ url: ogImage, alt: product.title }] : [{ url: DEFAULT_OG_IMAGE }];
 
   return {
@@ -63,7 +66,7 @@ export async function generateMetadata({
       url: `/listing/${product.slug}`,
       title: product.title,
       description,
-      siteName: "STACKMART",
+      siteName: "MDN STACKMART",
       images: ogImages,
     },
     twitter: {
@@ -116,7 +119,7 @@ export default async function ListingPage({
             </Link>
           ) : null}
           {product.is_featured ? (
-            <span className="inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-xs font-medium text-fg">
+            <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               Featured
             </span>
           ) : null}

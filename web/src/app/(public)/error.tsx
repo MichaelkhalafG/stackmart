@@ -26,6 +26,7 @@ export default function PublicError({
         title="We couldn't load this page"
         description="The catalog service may be temporarily unavailable. Try again in a moment."
         reset={reset}
+        code={error.digest}
       />
     </div>
   );

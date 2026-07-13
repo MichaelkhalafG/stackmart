@@ -27,4 +27,19 @@ return [
     // Config-cache-safe (never read env() directly in provider code).
     'frontend_url' => env('FRONTEND_URL'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Platform Commission (DR-8)
+    |--------------------------------------------------------------------------
+    | A FLAT 20% for every seller — no plans, no tiers. Snapshotted onto the
+    | product at approval and onto each order at checkout, so a future rate change
+    | can never rewrite historical payouts.
+    |
+    | This is pure arithmetic and is deliberately INDEPENDENT of the payment
+    | provider: it works today on the fake provider and will not change when a
+    | real gateway is chosen.
+    */
+
+    'commission_rate' => (float) env('PLATFORM_COMMISSION_RATE', 0.200),
+
 ];

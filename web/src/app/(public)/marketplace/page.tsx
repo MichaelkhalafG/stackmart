@@ -15,14 +15,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/marketplace",
-    title: "Marketplace · STACKMART",
+    title: "Marketplace · MDN STACKMART",
     description: MARKETPLACE_DESCRIPTION,
-    siteName: "STACKMART",
+    siteName: "MDN STACKMART",
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Marketplace · STACKMART",
+    title: "Marketplace · MDN STACKMART",
     description: MARKETPLACE_DESCRIPTION,
     images: [DEFAULT_OG_IMAGE],
   },

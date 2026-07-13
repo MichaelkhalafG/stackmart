@@ -26,6 +26,7 @@ export default function AuthError({
         title="Something went wrong"
         description="We couldn't load this page. Try again, or head back home."
         reset={reset}
+        code={error.digest}
       />
     </div>
   );

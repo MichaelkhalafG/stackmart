@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Mail\OrderDelivered;
+use App\Mail\ProjectSold;
 use App\Models\Order;
 use Illuminate\Support\Facades\Mail;
 
@@ -32,6 +33,30 @@ class FulfillOrder
 
         // Buyer's copy — carries the license + a pointer to /account/purchases for the download.
         Mail::to($order->user->email)->send(new OrderDelivered($order));
+
+        // Seller's copy — "your project sold". Everything below the idempotency guard runs EXACTLY
+        // once per sale, so a duplicate webhook can never send this twice (same protection
+        // OrderDelivered already relies on).
+        $this->notifySeller($order);
+    }
+
+    /**
+     * Tell the seller their project sold (DR-8). Separate from `PayoutSent`, which fires later, when
+     * the admin has actually transferred the money.
+     *
+     * The seller is denormalised onto the product at approval (there are no seller accounts). A
+     * listing authored by the admin — or any legacy/seeded product — has no `seller_email`; that is
+     * a normal state, not an error, so we simply skip the notification.
+     */
+    private function notifySeller(Order $order): void
+    {
+        $sellerEmail = $order->product?->seller_email;
+
+        if ($sellerEmail === null || $sellerEmail === '') {
+            return;
+        }
+
+        Mail::to($sellerEmail)->send(new ProjectSold($order));
     }
 
     /**

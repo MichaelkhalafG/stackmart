@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { useAuthStore } from "@/store/auth";
+import { ToastProvider } from "@/components/ui/toast";
 
 /**
  * Client providers mounted once in the root layout:
  * - TanStack Query for ALL server state (14_State_Management.md);
+ * - the shared toast region (Forms & Utility reference §05) — `useToast()` works anywhere below;
  * - rehydrates the persisted auth store on the client only (the store uses `skipHydration`,
  *   so server + first client render match — no hydration mismatch).
  */
@@ -29,5 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     void useAuthStore.persist.rehydrate();
   }, []);
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>{children}</ToastProvider>
+    </QueryClientProvider>
+  );
 }

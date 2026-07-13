@@ -18,6 +18,17 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // SENSITIVE (DR-8): never flash the seller's financial details back into the session on a
+        // validation failure, and keep them out of exception context / debug pages.
+        $exceptions->dontFlash([
+            'current_password',
+            'password',
+            'password_confirmation',
+            'payout_identifier',
+            'payout_holder_name',
+            'payout_bank_name',
+        ]);
+
         // Frozen 404 contract (Planning/12_API_Specification.md): API/JSON not-found
         // responses are exactly {"message":"Not found."} — never leak the model class or a debug trace.
         $exceptions->render(function (Throwable $e, Request $request) {

@@ -3,9 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2 } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { AuthField, FormError } from "./AuthField";
@@ -43,10 +43,14 @@ export function ResetPasswordForm({
 
   if (mutation.isSuccess) {
     return (
-      <div className="flex flex-col items-center gap-3 text-center">
-        <CheckCircle2 className="size-8 text-accent" aria-hidden />
-        <p className="text-sm text-fg-muted">{mutation.data.message || "Password has been reset."}</p>
-        <Link href="/login" className="text-sm font-medium text-accent hover:underline">
+      <div className="anim-fade flex flex-col gap-5">
+        <Alert variant="success" title="Password updated">
+          {mutation.data.message || "Password has been reset."}
+        </Alert>
+        <Link
+          href="/login"
+          className="text-center text-sm font-medium text-accent hover:underline"
+        >
           Sign in with your new password
         </Link>
       </div>
@@ -101,8 +105,8 @@ export function ResetPasswordForm({
         onChange={setConfirm}
         error={mismatch}
       />
-      <Button type="submit" size="lg" disabled={mutation.isPending} className="mt-1 w-full">
-        {mutation.isPending ? "Resetting…" : "Reset password"}
+      <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
+        Reset password
       </Button>
     </form>
   );

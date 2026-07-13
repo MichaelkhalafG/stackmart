@@ -9,7 +9,7 @@
  * can't break out of the script element.
  */
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, "");
-const SITE_NAME = "STACKMART";
+const SITE_NAME = "MDN STACKMART";
 const SITE_DESCRIPTION =
   "A curated marketplace for ready-made micro-SaaS products, web apps, and codebases — evaluate via live demo and repository links, then buy instantly.";
 

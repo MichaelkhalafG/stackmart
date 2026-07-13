@@ -25,11 +25,65 @@ export class ApiError extends Error {
 }
 
 /**
+ * Build `FormData` for a multipart request (DR-8: POST /api/submissions carries files).
+ *
+ * Encodes values the way Laravel's validator expects to read them back:
+ *   File                → images[] (repeated key, one entry per file)
+ *   array of primitives → tech_stack[languages][]
+ *   plain object        → metrics[mrr]
+ *   boolean             → "1" / "0"   (Laravel's `accepted` rule reads "1")
+ *   null / undefined    → omitted entirely (so `nullable` fields stay absent, not the string "null")
+ *
+ * Numbers become strings, which is fine: Laravel's `integer` rule accepts numeric strings.
+ */
+export function toFormData(payload: Record<string, unknown>): FormData {
+  const form = new FormData();
+
+  const append = (key: string, value: unknown): void => {
+    if (value === null || value === undefined || value === "") return;
+
+    if (value instanceof File || value instanceof Blob) {
+      form.append(key, value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      // Files and primitives alike are repeated under `key[]`.
+      value.forEach((item) => append(`${key}[]`, item));
+      return;
+    }
+
+    if (typeof value === "object") {
+      Object.entries(value as Record<string, unknown>).forEach(([childKey, childValue]) =>
+        append(`${key}[${childKey}]`, childValue),
+      );
+      return;
+    }
+
+    if (typeof value === "boolean") {
+      form.append(key, value ? "1" : "0");
+      return;
+    }
+
+    form.append(key, String(value));
+  };
+
+  Object.entries(payload).forEach(([key, value]) => append(key, value));
+
+  return form;
+}
+
+/**
  * The single fetch wrapper that talks to the Laravel API (14/15_*.md).
  * - resolves the base via `apiUrl()` (NEXT_PUBLIC_API_URL origin → `/api`, trailing-slash safe);
  * - attaches `Authorization: Bearer <token>` ONLY when a token is present (from the auth store);
  * - JSON by default; parses success/error JSON; surfaces the 422 `errors` map;
  * - on 401 clears the auth store and (client-side) redirects to /login.
+ *
+ * MULTIPART (DR-8): pass a `FormData` body and the wrapper leaves `Content-Type` UNSET, so the
+ * browser adds it along with the required multipart boundary. Setting it by hand would produce a
+ * boundary-less header and the server would fail to parse any part. Everything else — auth header,
+ * 422 mapping, 401 handling — is identical on both paths.
  *
  * Client-side use only — Server Components fetch the API directly (08_Frontend_Architecture.md).
  * `path` is relative to the API root and should start with "/", e.g. api("/products") → `<origin>/api/products`.
@@ -40,11 +94,18 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(0, "NEXT_PUBLIC_API_URL is not configured");
   }
 
+  const isMultipart = typeof FormData !== "undefined" && init?.body instanceof FormData;
+
   const token = useAuthStore.getState().token;
   const headers = new Headers(init?.headers);
   headers.set("Accept", "application/json");
-  if (init?.body !== undefined && !headers.has("Content-Type")) {
+
+  // JSON by default — but NEVER for FormData: the browser must set the multipart boundary itself.
+  if (init?.body !== undefined && !isMultipart && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
+  }
+  if (isMultipart) {
+    headers.delete("Content-Type");
   }
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);

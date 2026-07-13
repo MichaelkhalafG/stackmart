@@ -25,6 +25,7 @@ export default function RootError({
         title="Something went wrong"
         description="An unexpected error occurred. Try again, or head back home."
         reset={reset}
+        code={error.digest}
       />
     </div>
   );

@@ -4,28 +4,20 @@ import { useState } from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
-import { productImageUrl } from "@/lib/imageUrl";
+import { productImagesOrDefault } from "@/lib/imageUrl";
 
 /**
- * ListingGallery (13_Component_Map.md) — main image + clickable thumbnails via Next/Image. Each
- * `images[]` entry is normalized through `productImageUrl` (relative "placeholders/x.png" →
- * "/placeholders/x.png" from /web public; absolute API-storage URLs pass through unchanged).
+ * ListingGallery (13_Component_Map.md) — main image + clickable thumbnails via Next/Image.
+ *
+ * Every `images[]` entry goes through `productImagesOrDefault`: real images (absolute API-storage
+ * URLs or uploaded paths) pass through normalized, while missing images and the seeded coloured
+ * placeholder swatches collapse to the single shared default. The list is never empty, so the old
+ * "No preview images" empty state is gone — a listing without imagery now shows the default.
  */
 export function ListingGallery({ images, title }: { images: string[]; title: string }) {
   const [active, setActive] = useState(0);
 
-  const resolved = (images ?? [])
-    .map(productImageUrl)
-    .filter((src): src is string => src !== null);
-
-  if (resolved.length === 0) {
-    return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-md border border-border bg-canvas-subtle text-sm text-fg-muted">
-        No preview images
-      </div>
-    );
-  }
-
+  const resolved = productImagesOrDefault(images);
   const current = Math.min(active, resolved.length - 1);
 
   return (

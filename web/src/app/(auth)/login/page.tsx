@@ -12,23 +12,18 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <AuthShell
-      title="Sign in to STACKMART"
-      subtitle="Access your purchases and license keys."
+      title="Welcome back"
+      subtitle="Sign in to access your purchases and license keys."
       footer={
         <>
-          New to STACKMART?{" "}
-          <Link href="/register" className="font-medium text-accent hover:underline">
+          New here?{" "}
+          <Link href="/register" className="font-semibold text-accent hover:underline">
             Create an account
           </Link>
         </>
       }
     >
       <LoginForm />
-      <div className="mt-4 text-center">
-        <Link href="/forgot-password" className="text-sm text-accent hover:underline">
-          Forgot your password?
-        </Link>
-      </div>
     </AuthShell>
   );
 }

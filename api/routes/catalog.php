@@ -24,5 +24,9 @@ Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
 // J2.03 — public category taxonomy (ordered by sort_order).
 Route::get('/categories', [CatalogController::class, 'categories']);
 
-// J3.01 — public seller submission (persists status=new, fires SubmissionReceived).
-Route::post('/submissions', [SubmissionController::class, 'store']);
+// J3.01 (expanded by DR-8) — public seller submission (persists status=new, fires
+// SubmissionReceived). This is now a MULTIPART endpoint: an unauthenticated caller can push a
+// 100 MB ZIP + a README + 8 images per request, so it is rate-limited to blunt storage-exhaustion
+// abuse. It remains public by design — there are no seller accounts.
+Route::post('/submissions', [SubmissionController::class, 'store'])
+    ->middleware('throttle:10,1');

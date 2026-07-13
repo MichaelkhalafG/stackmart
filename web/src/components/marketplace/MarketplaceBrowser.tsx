@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MarketplaceCard, type ProductListItem } from "@/components/product/MarketplaceCard";
-import type { Category } from "@/components/home/CategoryStrip";
+import type { Category } from "@/lib/catalog";
 
 import { Blankslate } from "./Blankslate";
 import { FilterSidebar } from "./FilterSidebar";

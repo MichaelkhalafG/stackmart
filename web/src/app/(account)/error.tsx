@@ -25,6 +25,7 @@ export default function AccountError({
         title="We couldn't load your account"
         description="Your session may have expired, or the service is temporarily unavailable. Try again."
         reset={reset}
+        code={error.digest}
       />
     </div>
   );
