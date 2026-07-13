@@ -22,11 +22,37 @@ class SubmissionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?string $navigationGroup = 'Submissions';
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $modelLabel = 'submission';
 
     protected static ?string $recordTitleAttribute = 'project_name';
+
+    /**
+     * A nav badge with the count of submissions still awaiting review (new + in_review) —
+     * the admin sees the queue depth at a glance without opening the resource.
+     */
+    public static function getNavigationBadge(): ?string
+    {
+        $pending = static::getModel()::whereIn('status', [
+            SellerSubmission::STATUS_NEW,
+            SellerSubmission::STATUS_IN_REVIEW,
+        ])->count();
+
+        return $pending > 0 ? (string) $pending : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Submissions awaiting review';
+    }
 
     /** @var array<string, string> */
     protected static array $statuses = [
@@ -94,6 +120,9 @@ class SubmissionResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
+            ->emptyStateIcon('heroicon-o-inbox-arrow-down')
+            ->emptyStateHeading('No submissions yet')
+            ->emptyStateDescription('Seller submissions from the public /sell form land here for review.')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(self::$statuses),
             ])

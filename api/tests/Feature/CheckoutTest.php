@@ -7,15 +7,11 @@ use Laravel\Sanctum\Sanctum;
 
 /*
  * Checkout creation (S4.01) — POST /api/checkout { product_id } → { url }.
- * Written to the FROZEN §Buyer contract (Planning/12_API_Specification.md) against
- * the REAL FakePaymentProvider (never a gateway, never a stub). The endpoint lives
- * on `day-4`; routes/commerce.php has no checkout route on THIS branch, so
- * every test SKIPS here and runs automatically once S4.01 is merged at end-of-day
- * integration (roadmap dependency J4.02 dep S4.01). Engine-agnostic assertions.
+ * Asserts the FROZEN §Buyer contract (Planning/12_API_Specification.md) against the
+ * REAL FakePaymentProvider (never a gateway, never a stub). The endpoint is merged on
+ * dev@day-4, so these run unconditionally now (J5.03 un-skipped the cross-branch guard).
+ * Engine-agnostic assertions.
  */
-
-$skip = fn (): bool => ! checkoutAvailable();
-$reason = 'S4.01 checkout endpoint lands on day-4 — green after end-of-day integration.';
 
 it('creates a pending order and returns a redirect url', function () {
     $product = Product::factory()->published()->create();
@@ -35,7 +31,7 @@ it('creates a pending order and returns a redirect url', function () {
         ->and($order->status)->toBe(Order::STATUS_PENDING)
         ->and($order->provider_reference)->not->toBeNull()
         ->and($order->amount_cents)->toBe($product->price_cents);
-})->skip($skip, $reason);
+});
 
 it('rejects checkout without a product_id (422)', function () {
     $buyer = User::factory()->create();
@@ -44,11 +40,23 @@ it('rejects checkout without a product_id (422)', function () {
     $this->postJson('/api/checkout', [])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['product_id']);
-})->skip($skip, $reason);
+});
 
 it('requires authentication for checkout (401)', function () {
     $product = Product::factory()->published()->create();
 
     // No Sanctum::actingAs → the auth:sanctum guard rejects with 401.
     $this->postJson('/api/checkout', ['product_id' => $product->id])->assertUnauthorized();
-})->skip($skip, $reason);
+});
+
+it('rejects checkout for a non-existent product without creating an order', function () {
+    $buyer = User::factory()->create();
+
+    Sanctum::actingAs($buyer);
+    // Contract does not pin the code for an unknown product; it must reject (not 2xx) and
+    // create no order. 422 (exists rule) or 404 (route-model miss) are both acceptable.
+    $res = $this->postJson('/api/checkout', ['product_id' => 999999]);
+
+    expect($res->status())->toBeIn([404, 422]);
+    expect(Order::where('user_id', $buyer->id)->count())->toBe(0);
+});

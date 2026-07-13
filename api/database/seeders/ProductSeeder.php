@@ -196,7 +196,7 @@ class ProductSeeder extends Seeder
                 'tagline' => 'A two-sided marketplace starter kit',
                 'description' => "LaunchBase is a production marketplace boilerplate — listings, escrow-ready payments, reviews and messaging. Skip six months of build.\n\nShips as a full Next.js + Laravel monorepo.",
                 'price_cents' => 2500000,
-                'tech_stack' => ['Laravel', 'Next.js', 'PostgreSQL', 'Stripe', 'Redis'],
+                'tech_stack' => ['Laravel', 'Next.js', 'PostgreSQL', 'TypeScript', 'Redis'],
                 'metrics' => ['mrr' => 18400, 'users' => 2100, 'founded' => '2021', 'profit' => 12600],
                 'included' => ['Full source code', 'Deployment guide', 'Admin dashboard', 'API documentation', '1 year of updates'],
                 'faq' => [
