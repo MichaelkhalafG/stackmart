@@ -22,6 +22,8 @@ export function FileDrop({
   multiple = false,
   accept,
   onFiles,
+  invalid = false,
+  showChosen = true,
   className,
 }: {
   label?: string;
@@ -31,6 +33,13 @@ export function FileDrop({
   accept?: string;
   /** Called with the chosen/dropped files. Purely presentational otherwise — no upload here. */
   onFiles?: (files: File[]) => void;
+  /** Danger border, for a required-file validation error. */
+  invalid?: boolean;
+  /**
+   * Show the chosen filenames inside the zone. Set false when the CALLER renders its own file list
+   * (name + size + remove), so the two don't duplicate each other.
+   */
+  showChosen?: boolean;
   className?: string;
 }) {
   const id = useId();
@@ -69,6 +78,7 @@ export function FileDrop({
         "focus-within:ring-[3px] focus-within:ring-accent/25",
         accent ? "border-accent bg-tag-bg" : "border-border bg-canvas-subtle",
         dragging && "border-accent bg-tag-bg",
+        invalid && "border-danger bg-danger/5",
         className,
       )}
     >
@@ -92,7 +102,7 @@ export function FileDrop({
         {label} <span className="text-accent">browse</span>
       </span>
       <span className="mono mt-1 block text-[11.5px] text-fg-muted">
-        {chosen.length > 0 ? chosen.join(" · ") : hint}
+        {showChosen && chosen.length > 0 ? chosen.join(" · ") : hint}
       </span>
     </label>
   );

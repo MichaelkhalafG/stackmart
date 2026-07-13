@@ -44,8 +44,9 @@ export default function SellPage() {
           Submit a listing
         </h1>
         <p className="mt-2.5 max-w-[64ch] text-base leading-[1.5] text-fg-muted">
-          Submit your micro-SaaS, web app, or codebase for review. No account needed — our team vets
-          every submission and follows up by email.
+          Submit your micro-SaaS, web app, or codebase for review. Attach the code, a short
+          verification README and a few screenshots — the MDN STACKMART team vets every submission
+          and follows up by email. No account needed. Flat 20% commission when it sells.
         </p>
       </header>
 
