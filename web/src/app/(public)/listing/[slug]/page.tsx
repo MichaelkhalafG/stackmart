@@ -12,6 +12,7 @@ import { ProductJsonLd } from "@/components/listing/ProductJsonLd";
 import { PurchaseSidebar } from "@/components/listing/PurchaseSidebar";
 import { TechStackChips } from "@/components/listing/TechStackChips";
 import type { ProductDetail } from "@/components/listing/types";
+import { BreadcrumbJsonLd, type Crumb, DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 /**
  * `/listing/[slug]` — public listing detail, Server Component + ISR (08_Frontend_Architecture.md).
@@ -50,6 +51,8 @@ export async function generateMetadata({
 
   const description = product.tagline || product.description?.slice(0, 200);
   const ogImage = productImageUrl(product.images?.[0]); // OG image = the product's FIRST image (normalized)
+  // Fall back to the site-wide branded OG card when a listing has no image (so og:image is never empty).
+  const ogImages = ogImage ? [{ url: ogImage, alt: product.title }] : [{ url: DEFAULT_OG_IMAGE }];
 
   return {
     title: product.title,
@@ -61,13 +64,13 @@ export async function generateMetadata({
       title: product.title,
       description,
       siteName: "STACKMART",
-      images: ogImage ? [{ url: ogImage, alt: product.title }] : undefined,
+      images: ogImages,
     },
     twitter: {
-      card: ogImage ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title: product.title,
       description,
-      images: ogImage ? [ogImage] : undefined,
+      images: ogImages.map((img) => img.url),
     },
   };
 }
@@ -81,9 +84,25 @@ export default async function ListingPage({
   const product = await getProduct(slug);
   if (!product) notFound();
 
+  // Home → Marketplace → [Category] → Product (the category crumb is dropped when absent).
+  const breadcrumbs: Crumb[] = [
+    { name: "Home", path: "/" },
+    { name: "Marketplace", path: "/marketplace" },
+    ...(product.category
+      ? [
+          {
+            name: product.category.name,
+            path: `/marketplace?category=${encodeURIComponent(product.category.slug)}`,
+          },
+        ]
+      : []),
+    { name: product.title, path: `/listing/${product.slug}` },
+  ];
+
   return (
     <div className="py-2">
       <ProductJsonLd product={product} />
+      <BreadcrumbJsonLd items={breadcrumbs} />
 
       {/* Header row (title + status labels), full width */}
       <div className="flex flex-col gap-3 border-b border-border pb-6">

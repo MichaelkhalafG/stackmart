@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { MarketplaceBrowser } from "@/components/marketplace/MarketplaceBrowser";
 import { ProductGridSkeleton } from "@/components/marketplace/ProductGridSkeleton";
+import { BreadcrumbJsonLd, DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 const MARKETPLACE_DESCRIPTION =
   "Browse vetted micro-SaaS products, web apps, and codebases. Filter by category, tech stack, and price, then evaluate each listing with a live demo and repository review.";
@@ -17,11 +18,13 @@ export const metadata: Metadata = {
     title: "Marketplace · STACKMART",
     description: MARKETPLACE_DESCRIPTION,
     siteName: "STACKMART",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Marketplace · STACKMART",
     description: MARKETPLACE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
@@ -33,9 +36,17 @@ export const metadata: Metadata = {
  */
 export default function MarketplacePage() {
   return (
-    <Suspense fallback={<MarketplaceFallback />}>
-      <MarketplaceBrowser />
-    </Suspense>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", path: "/" },
+          { name: "Marketplace", path: "/marketplace" },
+        ]}
+      />
+      <Suspense fallback={<MarketplaceFallback />}>
+        <MarketplaceBrowser />
+      </Suspense>
+    </>
   );
 }
 

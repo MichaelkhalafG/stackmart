@@ -31,7 +31,7 @@ export function ProductJsonLd({ product }: { product: ProductDetail }) {
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger -- JSON-LD requires raw script content; `<` is escaped
+      // JSON-LD requires raw script content; `<` is escaped so product text can't break out.
       dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }}
     />
   );
