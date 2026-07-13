@@ -17,7 +17,9 @@ const NAVY = "#032b42";
 const NAVY_EMPHASIS = "#021d2e";
 const CANVAS = "#ffffff";
 const MUTED = "#9aa4b2";
-const BARS = ["#dee0ff", "#010ed0", "#fbb002"] as const;
+// Mark bars: lavender, royal blue, white. Amber (#fbb002) is retired from the palette (06 §1);
+// white (canvas) is the third bar so the three stay visually distinct on the navy tile.
+const BARS = ["#dee0ff", "#010ed0", "#ffffff"] as const;
 
 export default function OpengraphImage() {
   return new ImageResponse(

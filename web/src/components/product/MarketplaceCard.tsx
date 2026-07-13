@@ -74,7 +74,7 @@ export function MarketplaceCard({ product }: { product: ProductListItem }) {
               <span aria-hidden />
             )}
             {product.is_featured ? (
-              <span className="inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-xs font-medium text-fg">
+              <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                 Featured
               </span>
             ) : null}

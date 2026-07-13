@@ -12,7 +12,6 @@ export const colorTokens = [
   "accent",
   "primary",
   "primary-emphasis",
-  "highlight",
   "danger",
   "tag-bg",
   "tag-fg",

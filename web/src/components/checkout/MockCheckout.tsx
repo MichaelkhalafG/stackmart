@@ -48,7 +48,7 @@ export function MockCheckout() {
       <Card className="gap-0 p-0">
         <div className="flex flex-col gap-4 p-6">
           <div>
-            <span className="inline-flex items-center rounded-full bg-highlight px-2 py-0.5 text-xs font-medium text-fg">
+            <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
               Dev mock
             </span>
             <h1 className="mt-3 text-lg font-semibold text-fg">Simulated checkout</h1>
