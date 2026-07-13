@@ -34,6 +34,13 @@ class CheckoutController extends Controller
         // Only published listings are purchasable (a draft/sold slug 404s in the catalog too).
         abort_unless($product->status === Product::STATUS_PUBLISHED, 404);
 
+        // Payout accounting (DR-8) — SNAPSHOT the commission onto the order at creation, never
+        // derive it at read time: if a product's rate ever changes, historical payouts must not
+        // silently change with it. Pure arithmetic — no gateway involvement, so this works today on
+        // the FakePaymentProvider and is unaffected by the eventual provider choice.
+        $commissionRate = (float) $product->commission_rate;
+        $split = Order::splitCommission($product->price_cents, $commissionRate);
+
         $order = new Order([
             'user_id' => $request->user()->id,
             'product_id' => $product->id,
@@ -41,6 +48,10 @@ class CheckoutController extends Controller
             'currency' => $product->currency,
             'status' => Order::STATUS_PENDING,
             'payment_provider' => config('payments.provider'),
+            'commission_rate' => $commissionRate,
+            'platform_cut_cents' => $split['platform_cut_cents'],
+            'seller_payout_cents' => $split['seller_payout_cents'],
+            'payout_status' => Order::PAYOUT_PENDING,
         ]);
 
         // The provider issues the correlation key; persist the order WITH it in a single insert

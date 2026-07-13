@@ -23,7 +23,7 @@ class ProductFactory extends Factory
 
         $techPool = [
             'Laravel', 'Next.js', 'React', 'Vue', 'Nuxt', 'MySQL', 'PostgreSQL', 'Redis',
-            'Tailwind CSS', 'TypeScript', 'Node.js', 'Stripe', 'OpenAI', 'Docker', 'AWS',
+            'Tailwind CSS', 'TypeScript', 'Node.js', 'Redis', 'OpenAI', 'Docker', 'AWS',
             'Inertia', 'Livewire', 'Flutter', 'React Native', 'GraphQL',
         ];
         $includedPool = [

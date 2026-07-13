@@ -10,11 +10,11 @@ import { categoryInitials, formatCompactMoney, type CategoryWithCount, type Feat
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 
-/** Nav links. "How it works" / "About" anchor the landing sections (those routes don't exist yet). */
+/** Nav links. "How it works" anchors a landing section; "Guidelines" is a real page. */
 const NAV_LINKS = [
   { href: "/sell", label: "Sell your SaaS" },
   { href: "/#how", label: "How it works" },
-  { href: "/#about", label: "About" },
+  { href: "/guidelines", label: "Guidelines" },
 ];
 
 /**

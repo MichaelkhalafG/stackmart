@@ -7,9 +7,10 @@ import { Logo } from "./Logo";
  * columns, then a legal bar. The design's footer sits on the LIGHT canvas, so the logo uses its
  * navy variant here (the `light` variant exists for dark surfaces).
  *
- * Some destinations are marketing/legal pages that do not exist yet (Terms, Privacy, Careers,
- * Blog, Contact, the guides, FAQ). They are `href="#"` placeholders in the approved design too —
- * see the report; they become real links when those pages ship (S5.04 + marketing).
+ * The Resources column now resolves to the real `/guidelines` page (the buyer/seller guides and the
+ * FAQ are its sections, linked by anchor). The remaining marketing/legal destinations (Terms,
+ * Privacy, Careers, Blog, Contact) are still `href="#"` placeholders, as in the approved design —
+ * they become real links when those pages ship (S5.04 + marketing).
  */
 const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string }> }> = [
   {
@@ -33,10 +34,11 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
   {
     title: "Resources",
     links: [
-      { label: "Seller guide", href: "#" },
-      { label: "Buyer guide", href: "#" },
+      { label: "Guidelines", href: "/guidelines" },
+      { label: "Seller guide", href: "/guidelines#for-sellers" },
+      { label: "Buyer guide", href: "/guidelines#for-buyers" },
       { label: "How it works", href: "/#how" },
-      { label: "FAQ", href: "#" },
+      { label: "FAQ", href: "/guidelines#faq" },
     ],
   },
 ];

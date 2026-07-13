@@ -3,13 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrderResource\Pages;
+use App\Mail\PayoutSent;
 use App\Models\Order;
+use App\Models\SellerSubmission;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontFamily;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\HtmlString;
 
 /**
  * ADMIN Filament resource for orders. Read-mostly: the only mutable
@@ -118,6 +123,36 @@ class OrderResource extends Resource
                     ->fontFamily(FontFamily::Mono)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('download_count')->numeric()->sortable()->placeholder('0')->toggleable(),
+
+                // ── Payout accounting (DR-8) ─────────────────────────────────────────────────
+                // The seller's share is what the admin actually transfers. The platform cut is
+                // shown for reconciliation. Both were snapshotted at checkout.
+                Tables\Columns\TextColumn::make('seller_payout_cents')
+                    ->label('Seller payout')
+                    ->money('USD', divideBy: 100)
+                    ->fontFamily(FontFamily::Mono)
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('platform_cut_cents')
+                    ->label('Platform cut')
+                    ->money('USD', divideBy: 100)
+                    ->fontFamily(FontFamily::Mono)
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('product.seller_name')
+                    ->label('Seller')
+                    ->placeholder('—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('payout_status')
+                    ->label('Payout')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === Order::PAYOUT_PAID ? 'success' : 'warning')
+                    ->formatStateUsing(fn (string $state): string => $state === Order::PAYOUT_PAID ? 'Paid' : 'Pending')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('payout_paid_at')
+                    ->label('Paid on')
+                    ->dateTime()
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('delivered_at')->dateTime()->sortable()->placeholder('Not delivered')->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -127,10 +162,134 @@ class OrderResource extends Resource
             ->emptyStateDescription('Orders appear here once a buyer completes checkout.')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(self::$statuses),
+                Tables\Filters\SelectFilter::make('payout_status')
+                    ->label('Payout')
+                    ->options([
+                        Order::PAYOUT_PENDING => 'Pending',
+                        Order::PAYOUT_PAID => 'Paid',
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+
+                // ── The payout workflow (DR-8) ───────────────────────────────────────────────
+                // Read-only view of where to send the money. Masked by default; the full identifier
+                // is revealed only when the admin explicitly opens this modal.
+                Tables\Actions\Action::make('view_payout_details')
+                    ->label('Payout details')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('gray')
+                    ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PAID)
+                    ->modalHeading('Where to transfer this payout')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(fn (Order $record): HtmlString => self::payoutDetailsHtml($record)),
+
+                // The admin transfers the money OUT OF BAND, then records it here. Proof of the
+                // transfer is REQUIRED — the action cannot be completed without it.
+                Tables\Actions\Action::make('mark_payout_paid')
+                    ->label('Mark payout paid')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Record this payout')
+                    ->modalDescription('Attach the proof of transfer. The seller is emailed a confirmation with the proof attached.')
+                    ->visible(fn (Order $record): bool => $record->status === Order::STATUS_PAID
+                        && $record->payout_status === Order::PAYOUT_PENDING)
+                    ->form([
+                        Forms\Components\FileUpload::make('payout_proof_path')
+                            ->label('Proof of transfer')
+                            ->image()
+                            ->required()
+                            // A financial document → PRIVATE disk. Never a public URL.
+                            ->disk('deliverables')
+                            ->directory('payouts')
+                            ->visibility('private')
+                            ->maxSize(5120)
+                            ->helperText('Screenshot or receipt of the bank/PayPal transfer. Stored privately.'),
+                        Forms\Components\Textarea::make('payout_notes')
+                            ->label('Notes (optional)')
+                            ->rows(2)
+                            ->helperText('Included in the email to the seller. Do not put account details here.'),
+                    ])
+                    ->action(fn (Order $record, array $data) => self::recordPayout($record, $data)),
             ]);
+    }
+
+    /**
+     * Mark a paid order's seller payout as settled and notify the seller.
+     *
+     * The transfer itself happens out of band (bank/PayPal). This records it, stores the proof on
+     * the PRIVATE disk, and emails the seller a confirmation with the proof attached.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected static function recordPayout(Order $record, array $data): void
+    {
+        $seller = $record->product?->seller_email;
+
+        $record->update([
+            'payout_proof_path' => $data['payout_proof_path'] ?? null,
+            'payout_notes' => $data['payout_notes'] ?? null,
+            'payout_status' => Order::PAYOUT_PAID,
+            'payout_paid_at' => now(),
+        ]);
+
+        // The listing may predate DR-8 (admin-authored, no seller on file) — record the payout
+        // anyway, but say plainly that nobody was emailed rather than failing silently.
+        if (blank($seller)) {
+            Notification::make()
+                ->title('Payout recorded')
+                ->body('No seller email on this listing — no confirmation was sent.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        Mail::to($seller)->send(new PayoutSent($record->fresh()->load('product')));
+
+        Notification::make()
+            ->title('Payout recorded and the seller was emailed')
+            ->success()
+            ->send();
+    }
+
+    /**
+     * The seller's payout destination, decrypted for the admin at the moment of transfer.
+     * Sourced from the originating submission — the only place the payout details are stored.
+     */
+    protected static function payoutDetailsHtml(Order $record): HtmlString
+    {
+        $submission = $record->product?->sellerSubmission;
+
+        if ($submission === null || blank($submission->payout_identifier)) {
+            return new HtmlString('<p class="text-sm text-gray-500">No payout details on file for this listing.</p>');
+        }
+
+        $rows = [
+            'Seller' => $record->product->seller_name ?? '—',
+            'Method' => match ($submission->payout_method) {
+                SellerSubmission::PAYOUT_BANK => 'Bank transfer',
+                SellerSubmission::PAYOUT_PAYPAL => 'PayPal',
+                default => '—',
+            },
+            'Account holder' => $submission->payout_holder_name ?? '—',
+            'Identifier' => $submission->payout_identifier,
+            'Bank' => $submission->payout_bank_name ?? '—',
+            'Transfer' => '$'.number_format($record->seller_payout_cents / 100, 2),
+        ];
+
+        $html = '<div class="space-y-2 text-sm">';
+        foreach ($rows as $label => $value) {
+            $html .= '<div class="flex justify-between gap-4">'
+                .'<span class="text-gray-500">'.e($label).'</span>'
+                .'<span class="font-mono font-medium">'.e((string) $value).'</span>'
+                .'</div>';
+        }
+        $html .= '</div>';
+
+        return new HtmlString($html);
     }
 
     public static function getRelations(): array
