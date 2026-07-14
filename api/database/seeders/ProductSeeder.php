@@ -9,6 +9,39 @@ use Illuminate\Support\Carbon;
 
 class ProductSeeder extends Seeder
 {
+    /** Flat platform commission for every listing (DR-8). */
+    public const COMMISSION_RATE = 0.200;
+
+    /**
+     * Which seller submitted which listing — the payee for that product's orders.
+     *
+     * Four sellers, deliberately spread across price bands so the dashboard's per-seller ranking
+     * has something to rank. THREE listings are intentionally absent (substack-lite, rentreach,
+     * fittrack): those are admin-authored with no payee, which is what feeds "Blocked payouts".
+     *
+     * @return array<string, array{name: string, email: string}>
+     */
+    private function sellers(): array
+    {
+        $ada = ['name' => 'Ada Okafor', 'email' => 'ada@sellers.test'];
+        $grace = ['name' => 'Grace Lin', 'email' => 'grace@sellers.test'];
+        $linus = ['name' => 'Linus Vega', 'email' => 'linus@sellers.test'];
+        $mira = ['name' => 'Mira Haddad', 'email' => 'mira@sellers.test'];
+
+        return [
+            'inboxzero-ai' => $ada,
+            'focusflow' => $ada,
+            'notevault' => $ada,
+            'cartspark' => $grace,
+            'cronpilot' => $grace,
+            'pixelforge' => $linus,
+            'deploydeck' => $linus,
+            'launchbase' => $mira,
+            'tripstash' => $mira,
+            // substack-lite / rentreach / fittrack → no seller (admin-authored).
+        ];
+    }
+
     /**
      * Exactly 12 published listings — the frozen catalog the frontend builds against.
      *
@@ -33,6 +66,12 @@ class ProductSeeder extends Seeder
             $categorySlug = $listing['category'];
             unset($listing['category']);
 
+            // The seller is DENORMALISED onto the listing (there are no seller accounts) — this is
+            // what lets `order → product → seller_email` resolve for payouts. Listings absent from
+            // the map are admin-authored and have NO payee: a normal state the dashboard surfaces
+            // as "Blocked payouts".
+            $seller = $this->sellers()[$listing['slug']] ?? null;
+
             Product::updateOrCreate(
                 ['slug' => $listing['slug']],
                 array_merge($listing, [
@@ -41,6 +80,9 @@ class ProductSeeder extends Seeder
                     'status' => Product::STATUS_PUBLISHED,
                     'published_at' => $published->copy()->addDays($i * 3),
                     'deliverable_path' => null, // real ZIP uploaded via Filament (private disk) Days 6–7
+                    'seller_name' => $seller['name'] ?? null,
+                    'seller_email' => $seller['email'] ?? null,
+                    'commission_rate' => self::COMMISSION_RATE, // flat 20% (DR-8)
                 ])
             );
         }
