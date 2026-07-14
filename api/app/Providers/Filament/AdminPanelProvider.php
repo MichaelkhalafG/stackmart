@@ -25,7 +25,8 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            // The API is a headless backend served under /api — the panel owns the web root.
+            ->path('')
             ->login()
             ->colors([
                 'primary' => Color::Amber,
