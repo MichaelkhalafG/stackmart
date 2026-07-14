@@ -5,6 +5,10 @@ import { Shimmer, TerminalLine } from "@/components/states/LoadingState";
  * two-panel split (branded form panel left, navy coding panel right), not the old centred card.
  * Keeping the two in step is what stops the page jumping when the real form swaps in.
  *
+ * That includes the RESPONSIVE behaviour: like `AuthShell`, the decorative navy panel is
+ * `hidden md:flex`, so a phone sees a single form-shaped skeleton and the page does not reflow when
+ * the real shell arrives.
+ *
  * `fields` is the number of inputs the target form has (login 2 · register 4 · forgot 1), so the
  * skeleton's height matches what replaces it.
  */
@@ -26,7 +30,7 @@ export function AuthShellSkeleton({ fields = 2 }: { fields?: number }) {
         <div className="relative mx-auto flex w-full max-w-[480px] flex-1 flex-col">
           <Shimmer className="h-6 w-40" />
 
-          <div className="flex flex-1 flex-col justify-center py-10">
+          <div className="flex flex-1 flex-col justify-center py-8 sm:py-10">
             <Shimmer className="h-[3px] w-10" />
             <Shimmer className="mt-6 h-10 w-60" delay="0.08s" />
             <Shimmer className="mt-2.5 h-4 w-full max-w-[280px]" delay="0.16s" />
@@ -46,8 +50,8 @@ export function AuthShellSkeleton({ fields = 2 }: { fields?: number }) {
         </div>
       </div>
 
-      {/* Branded navy coding panel */}
-      <div className="panel-navy relative flex min-h-[360px] flex-col justify-between overflow-hidden p-[clamp(32px,4.5vw,64px)] lg:min-h-full">
+      {/* Branded navy coding panel — decorative, hidden on phones exactly as in `AuthShell`. */}
+      <div className="panel-navy relative hidden min-h-[360px] flex-col justify-between overflow-hidden p-[clamp(32px,4.5vw,64px)] md:flex lg:min-h-full">
         <div className="motif-grid absolute inset-0" aria-hidden />
 
         <div className="relative flex flex-col gap-6">

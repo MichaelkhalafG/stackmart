@@ -1216,15 +1216,23 @@ export function SellForm() {
         </div>
 
         {/* ── footer bar ────────────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border bg-canvas-subtle px-6 py-[22px] sm:px-8 lg:px-10">
+        {/* Action row: full-width, 44px-tall buttons stacked on phones; the design's justified row
+            from sm up. */}
+        <div className="flex flex-col items-stretch gap-4 border-t border-border bg-canvas-subtle px-6 py-[22px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8 lg:px-10">
           <span className="text-[13px] text-fg-muted">
             No account needed — our team replies by email.
           </span>
-          <div className="flex items-center gap-3">
-            <Button type="button" variant="ghost" onClick={clearForm} disabled={mutation.isPending}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={clearForm}
+              disabled={mutation.isPending}
+              className="w-full sm:w-auto"
+            >
               Clear form
             </Button>
-            <Button type="submit" loading={mutation.isPending}>
+            <Button type="submit" loading={mutation.isPending} className="w-full sm:w-auto">
               {mutation.isPending ? "Uploading…" : "Submit for review"}
             </Button>
           </div>

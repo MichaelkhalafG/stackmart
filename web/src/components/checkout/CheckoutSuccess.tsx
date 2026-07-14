@@ -166,11 +166,19 @@ export function CheckoutSuccess() {
                 Your license key
               </div>
 
-              <div className="mt-4 flex items-center gap-3 rounded-lg border border-tag-bg/20 bg-primary-emphasis/55 px-4 py-4">
-                <p className="mono flex-1 break-all text-[clamp(1.05rem,2.2vw,1.5rem)] font-semibold tracking-[0.08em] text-canvas">
+              {/*
+                The key is the one string on this page that cannot be allowed to overflow: 19 mono
+                characters at wide tracking do not fit beside the copy button at 360px. It breaks
+                (`break-all`) and its size + tracking scale down on phones; from `sm` up the clamp
+                and the 0.08em tracking are exactly as before.
+              */}
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-tag-bg/20 bg-primary-emphasis/55 px-3 py-3.5 sm:gap-3 sm:px-4 sm:py-4">
+                <p className="mono min-w-0 flex-1 break-all text-[0.95rem] font-semibold tracking-[0.04em] text-canvas sm:text-[clamp(1.05rem,2.2vw,1.5rem)] sm:tracking-[0.08em]">
                   {order.license_key}
                 </p>
-                <CopyButton value={order.license_key} label="Copy license key" />
+                <div className="flex-none [&>button]:size-11 sm:[&>button]:size-9">
+                  <CopyButton value={order.license_key} label="Copy license key" />
+                </div>
               </div>
 
               <p className="mono mt-3.5 flex items-center gap-1.5 text-[11.5px] text-tag-bg/60">
@@ -271,7 +279,7 @@ function StateCard({
   action?: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-[480px] flex-col items-center rounded-xl border border-border bg-canvas p-8 text-center sm:p-10">
+    <div className="mx-auto flex w-full max-w-[480px] flex-col items-center rounded-xl border border-border bg-canvas p-6 text-center sm:p-10">
       <span
         aria-hidden
         className="flex size-14 items-center justify-center rounded-lg bg-tag-bg text-accent"

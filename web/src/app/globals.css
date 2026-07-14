@@ -158,6 +158,13 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+
+    /* Safety net, NOT a fix: a single fixed-width mistake anywhere used to turn into a page-wide
+       sideways scroll on phones (there was no guard at all). `clip` contains it without creating a
+       scroll container — unlike `hidden`, it does not break `position: sticky` on descendants
+       (the marketplace filter rail, the sell progress rail, the sticky header all rely on it).
+       Real overflow bugs must still be fixed at the source. */
+    overflow-x: clip;
   }
   a {
     color: var(--accent);

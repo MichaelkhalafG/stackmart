@@ -26,6 +26,14 @@ import type { OrderDetail } from "@/components/checkout/CheckoutSuccess";
  *
  * What is new: the order summary (fetched from the frozen `GET /api/orders/{ref}`), a plain-English
  * terms/privacy summary, and a REQUIRED consent checkbox that gates the pay button.
+ *
+ * LAYOUT. From `lg` up: two columns — the "what you receive" + terms column, and a sticky order
+ * summary / pay rail on the right. Below `lg` the grid collapses to one column, and the summary rail
+ * is pulled ABOVE the long terms copy (`order-first lg:order-none`, CSS only — the JSX order, and
+ * therefore the DOM/tab order on desktop, is unchanged). Otherwise a phone user scrolls past two
+ * screens of prose before they ever see the price or the pay button. The button's "you haven't
+ * agreed yet" affordance — it scrolls down to `#terms-consent` and flashes it — carries the flow the
+ * other way, so the price is up top and the consent is one tap away.
  */
 export function MockCheckout() {
   const router = useRouter();
@@ -188,6 +196,10 @@ export function MockCheckout() {
 
             <div className="mt-6 border-t border-border pt-5">
               <Checkbox
+                // On a phone the consent label wraps to 2–3 lines; top-align the box against the
+                // first line rather than the middle of the block. `max-lg:` only — desktop, where
+                // the label is a single line, is byte-for-byte the same.
+                className="max-lg:items-start"
                 checked={agreed}
                 onChange={(event) => {
                   setAgreed(event.target.checked);
@@ -218,7 +230,9 @@ export function MockCheckout() {
         </div>
 
         {/* ── Right: order summary + pay ────────────────────────────────── */}
-        <aside className="lg:sticky lg:top-24">
+        {/* Below `lg` this rail is hoisted above the terms (visual order only). At `lg` the order is
+            reset so the grid places it back in the second column, sticky, exactly as before. */}
+        <aside className="order-first lg:sticky lg:top-24 lg:order-none">
           <div className="panel-navy relative overflow-hidden rounded-xl">
             <div className="motif-grid absolute inset-0" aria-hidden />
 
@@ -281,7 +295,7 @@ export function MockCheckout() {
               <button
                 type="button"
                 onClick={sendToTerms}
-                className="flex items-center justify-center gap-1.5 text-center text-[13px] font-semibold text-accent hover:underline"
+                className="flex min-h-11 items-center justify-center gap-1.5 text-center text-[13px] font-semibold text-accent hover:underline lg:min-h-0"
               >
                 <ArrowDown className="size-4 shrink-0" strokeWidth={2.6} aria-hidden />
                 Scroll down and agree to the Terms &amp; Privacy to continue
@@ -299,7 +313,7 @@ export function MockCheckout() {
               type="button"
               onClick={() => simulate("failed")}
               disabled={pending !== null}
-              className="mono mt-1 text-center text-[11px] text-fg-muted underline decoration-dotted underline-offset-4 hover:text-danger disabled:opacity-50"
+              className="mono mt-1 flex min-h-11 items-center justify-center text-center text-[11px] text-fg-muted underline decoration-dotted underline-offset-4 hover:text-danger disabled:opacity-50 lg:min-h-0"
             >
               dev: simulate a failed payment
             </button>

@@ -24,21 +24,22 @@ const TESTIMONIALS = [
 
 export function Testimonials() {
   return (
-    <section className="container-page py-[clamp(64px,8vw,108px)]">
-      <div className="mx-auto mb-[46px] max-w-[600px] text-center">
+    <section className="container-page py-[clamp(64px,8vw,108px)] max-md:py-[clamp(48px,8vw,64px)]">
+      <div className="mx-auto mb-[46px] max-w-[600px] text-center max-md:mb-8">
         <div className="text-[13px] font-semibold tracking-[0.08em] text-accent uppercase">
           Trusted by operators
         </div>
-        <h2 className="mt-2.5 text-[clamp(1.9rem,3.2vw,2.8rem)] font-bold tracking-[-0.025em] text-primary">
+        {/* Mobile scale tops out at the desktop floor (1.9rem) by 543px, so md+ is unchanged. */}
+        <h2 className="mt-2.5 text-[clamp(1.9rem,3.2vw,2.8rem)] font-bold tracking-[-0.025em] text-primary max-md:text-[clamp(1.6rem,5.6vw,1.9rem)]">
           Deals that close, founders who come back
         </h2>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-6 max-md:gap-4">
         {TESTIMONIALS.map((item) => (
           <figure
             key={item.name}
-            className="m-0 rounded-[10px] border border-border bg-canvas-subtle p-[26px]"
+            className="m-0 rounded-[10px] border border-border bg-canvas-subtle p-[26px] max-md:p-5"
           >
             <div className="flex gap-[3px] text-[15px] text-accent" aria-label="5 out of 5 stars">
               <span aria-hidden>★★★★★</span>
@@ -47,10 +48,11 @@ export function Testimonials() {
               &ldquo;{item.quote}&rdquo;
             </blockquote>
             <figcaption className="mt-5 flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-full bg-tag-bg text-sm font-bold text-tag-fg">
+              {/* max-md:shrink-0 keeps the avatar circular when a long name squeezes the row at 360px. */}
+              <span className="flex size-10 items-center justify-center rounded-full bg-tag-bg text-sm font-bold text-tag-fg max-md:shrink-0">
                 {item.initials}
               </span>
-              <span>
+              <span className="max-md:min-w-0">
                 <span className="block text-sm font-semibold text-primary">{item.name}</span>
                 <span className="text-[13px] text-fg-muted">{item.role}</span>
               </span>

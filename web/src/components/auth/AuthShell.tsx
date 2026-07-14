@@ -24,6 +24,11 @@ import { Logo } from "@/components/layout/Logo";
  * Both panels stretch to the full viewport height. Below `lg` the split collapses to one column:
  * the form comes FIRST (it is what the user came for) and the navy panel follows beneath it.
  *
+ * PHONES (< `md`): the navy panel is DECORATIVE brand content, and stacked below the form it added a
+ * second full screen of scrolling before the user could see anything actionable. It is therefore
+ * `hidden md:flex` — on a phone the auth screen is exactly the form, filling the viewport. From `md`
+ * (tablet) up it returns beneath the form, and from `lg` up it is the right half of the split.
+ *
  * The logo lockup at the top of the form links back to `/` — the only navigation these screens need
  * now that the navbar is gone. Server-safe (no hooks); the interactive form is passed as children.
  */
@@ -64,7 +69,7 @@ export function AuthShell({
           </div>
 
           {/* Middle — heading + form, vertically centred in the remaining space */}
-          <div className="flex flex-1 flex-col justify-center py-10">
+          <div className="flex flex-1 flex-col justify-center py-8 sm:py-10">
             <span className="block h-[3px] w-10 rounded-full bg-accent" aria-hidden />
 
             <h1 className="mt-6 text-[clamp(1.9rem,2.8vw,2.5rem)] leading-tight font-bold tracking-[-0.02em] text-primary">
@@ -78,8 +83,14 @@ export function AuthShell({
           </div>
 
           {/* Bottom — the switch link, plus a mono footer detail so the base isn't empty */}
+          {/* On touch screens the inline switch link gets a taller hit area (`max-lg:` only, so the
+              desktop line-height and rhythm are untouched). */}
           <div className="flex flex-col gap-4">
-            {footer ? <p className="text-center text-sm text-fg-muted">{footer}</p> : null}
+            {footer ? (
+              <p className="text-center text-sm text-fg-muted max-lg:[&_a]:inline-block max-lg:[&_a]:py-3">
+                {footer}
+              </p>
+            ) : null}
             <p className="mono flex items-center justify-center gap-2 text-[11px] text-fg-muted">
               <span className="text-accent">$</span> mdn-stackmart · vetted micro-SaaS
             </p>
@@ -88,7 +99,8 @@ export function AuthShell({
       </div>
 
       {/* ── Branded navy coding panel ──────────────────────────────────────── */}
-      <div className="panel-navy relative flex min-h-[360px] flex-col justify-between overflow-hidden p-[clamp(32px,4.5vw,64px)] lg:min-h-full">
+      {/* Decorative — hidden on phones so the form owns the viewport; from `md` up it is back. */}
+      <div className="panel-navy relative hidden min-h-[360px] flex-col justify-between overflow-hidden p-[clamp(32px,4.5vw,64px)] md:flex lg:min-h-full">
         <div className="motif-grid absolute inset-0" aria-hidden />
 
         <div className="relative">

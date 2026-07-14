@@ -116,8 +116,14 @@ export function EditNameForm({ user }: { user: User }) {
           )}
         </Field>
 
-        <div className="flex items-center gap-3">
-          <Button type="submit" loading={mutation.isPending} disabled={!isDirty}>
+        {/* Phones: the two actions stack full-width (44px targets). From `sm` up: the original row. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Button
+            type="submit"
+            loading={mutation.isPending}
+            disabled={!isDirty}
+            className="w-full sm:w-auto"
+          >
             {!mutation.isPending && mutation.isSuccess ? <Check className="size-4" aria-hidden /> : null}
             Save changes
           </Button>
@@ -126,6 +132,7 @@ export function EditNameForm({ user }: { user: User }) {
             <Button
               type="button"
               variant="ghost"
+              className="w-full sm:w-auto"
               onClick={() => {
                 setName(user.name);
                 setClientError(undefined);

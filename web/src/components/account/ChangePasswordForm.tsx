@@ -161,7 +161,8 @@ export function ChangePasswordForm() {
         />
 
         <div className="pt-1">
-          <Button type="submit" loading={mutation.isPending}>
+          {/* Full-width on phones, the original auto-width button from `sm` up. */}
+          <Button type="submit" loading={mutation.isPending} className="w-full sm:w-auto">
             Update password
           </Button>
         </div>

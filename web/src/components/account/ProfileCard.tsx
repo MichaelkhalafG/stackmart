@@ -58,7 +58,7 @@ export function ProfileCard({ user }: { user: User }) {
         </div>
 
         <div className="mt-3.5 flex flex-wrap items-center gap-2">
-          <h2 className="text-[1.15rem] leading-tight font-bold tracking-[-0.01em] text-primary">
+          <h2 className="min-w-0 text-[1.15rem] leading-tight font-bold tracking-[-0.01em] break-words text-primary">
             {user.name}
           </h2>
           {user.is_admin ? (
@@ -69,7 +69,7 @@ export function ProfileCard({ user }: { user: User }) {
           ) : null}
         </div>
 
-        <p className="mono mt-1 flex items-center text-[12.5px] text-fg-muted">
+        <p className="mono mt-1 flex items-center text-[12.5px] break-all text-fg-muted">
           ~/{handle}
           <span
             aria-hidden
@@ -79,11 +79,18 @@ export function ProfileCard({ user }: { user: User }) {
 
         <dl className="mt-5 flex flex-col gap-3 border-t border-border pt-5 text-[13px]">
           <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-fg-muted">Email</dt>
-            <dd className="mono min-w-0 truncate font-medium text-fg">{user.email}</dd>
+            <dt className="flex-none text-fg-muted">Email</dt>
+            {/*
+              From `sm` up this is the unchanged single-line truncation. On a phone there is no room
+              to truncate a long address into anything readable, so it wraps on the address itself
+              (`break-all`) rather than hiding the end of it behind an ellipsis.
+            */}
+            <dd className="mono min-w-0 font-medium break-all text-fg sm:truncate sm:break-normal">
+              {user.email}
+            </dd>
           </div>
           <div className="flex items-baseline justify-between gap-4">
-            <dt className="text-fg-muted">Role</dt>
+            <dt className="flex-none text-fg-muted">Role</dt>
             <dd className="font-medium text-fg">{user.is_admin ? "Administrator" : "Buyer"}</dd>
           </div>
         </dl>

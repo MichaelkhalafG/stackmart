@@ -114,12 +114,15 @@ export function LicenseDownload({ orderId }: { orderId: number }) {
 
   if (query.isError || !order) {
     return (
-      <div className="mx-auto max-w-[520px] rounded-xl border border-border bg-canvas p-8 text-center">
+      <div className="mx-auto w-full max-w-[520px] rounded-xl border border-border bg-canvas p-6 text-center sm:p-8">
         <h1 className="text-[1.35rem] font-bold text-primary">We couldn&rsquo;t find that order</h1>
         <p className="mt-2 text-[14.5px] text-fg-muted">
           It may belong to another account. Check your purchases and try again.
         </p>
-        <Link href="/account/purchases" className={cn(buttonVariants({ variant: "outline" }), "mt-6")}>
+        <Link
+          href="/account/purchases"
+          className={cn(buttonVariants({ variant: "outline" }), "mt-6 w-full sm:w-auto")}
+        >
           Go to your purchases
         </Link>
       </div>
@@ -161,6 +164,11 @@ export function LicenseDownload({ orderId }: { orderId: number }) {
               tooltip="Your license key proves this copy is a paid one. We ask for it on every download, on top of your sign-in — so a stolen session alone can't take your source code."
             >
               {(fieldProps) => (
+                /*
+                  A 19-char key (and the "XXXX-XXXX-XXXX-XXXX" placeholder) has to fit the field at
+                  360px, so the mono size and letter-spacing step down below `sm` and return to the
+                  unchanged desktop treatment from `sm` up.
+                */
                 <Input
                   {...fieldProps}
                   name="license_key"
@@ -169,7 +177,7 @@ export function LicenseDownload({ orderId }: { orderId: number }) {
                   placeholder="XXXX-XXXX-XXXX-XXXX"
                   autoComplete="off"
                   spellCheck={false}
-                  className="mono text-[1.05rem] tracking-[0.1em] uppercase"
+                  className="mono text-[14px] tracking-[0.04em] uppercase sm:text-[1.05rem] sm:tracking-[0.1em]"
                 />
               )}
             </Field>
@@ -179,7 +187,7 @@ export function LicenseDownload({ orderId }: { orderId: number }) {
               <button
                 type="button"
                 onClick={() => setLicenseKey(order.license_key ?? "")}
-                className="mono self-start text-[12px] font-semibold text-accent hover:underline"
+                className="mono flex min-h-11 items-center self-start text-[12px] font-semibold text-accent hover:underline sm:block sm:min-h-0"
               >
                 <KeyRound className="mr-1 inline size-3.5" aria-hidden />
                 Use the key from this purchase
@@ -213,10 +221,10 @@ export function LicenseDownload({ orderId }: { orderId: number }) {
                 Licensed delivery
               </span>
 
-              <h2 className="mt-5 text-[1.6rem] leading-tight font-bold tracking-[-0.01em] text-canvas">
+              <h2 className="mt-5 text-[1.35rem] leading-tight font-bold tracking-[-0.01em] break-words text-canvas sm:text-[1.6rem]">
                 {order.product.title}
               </h2>
-              <p className="mono mt-2 text-[13px] text-canvas/70">
+              <p className="mono mt-2 text-[13px] break-words text-canvas/70">
                 order #{order.id} · {formatPrice(order.amount_cents, order.currency)}
               </p>
             </div>

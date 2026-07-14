@@ -100,7 +100,9 @@ export function ListingCard({ product, index = 0 }: { product: FeaturedProduct; 
       {/* Flex column so real taglines of differing length still bottom-align the price row and
           the CTA across the grid (the design assumed single-line taglines). */}
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-center justify-between gap-2">
+        {/* `max-sm:flex-wrap`: a long category name can drop "Verified" to its own line on a phone
+            instead of squashing it. */}
+        <div className="flex items-center justify-between gap-2 max-sm:flex-wrap">
           {product.category ? (
             <span className="rounded-md bg-tag-bg px-2.5 py-1 text-xs font-semibold text-tag-fg">
               {product.category.name}
@@ -114,12 +116,20 @@ export function ListingCard({ product, index = 0 }: { product: FeaturedProduct; 
           </span>
         </div>
 
-        <h3 className="mt-[15px] text-[1.4rem] font-bold text-primary">{product.title}</h3>
-        <p className="mt-1.5 line-clamp-2 flex-1 text-sm leading-[1.5] text-fg-muted">
+        {/* `break-words` so an unbroken long title (e.g. a bare domain) wraps instead of overflowing
+            the 360px card. Mobile-only; the card is `overflow-hidden`. */}
+        <h3 className="mt-[15px] text-[1.4rem] font-bold text-primary max-sm:break-words">
+          {product.title}
+        </h3>
+        {/* One extra tagline line on phones — the card is full-width and single-column there, so the
+            taller body cannot desync the price row across a grid row. */}
+        <p className="mt-1.5 line-clamp-2 flex-1 text-sm leading-[1.5] text-fg-muted max-sm:line-clamp-3">
           {product.tagline}
         </p>
 
-        <div className="mt-[18px] flex items-baseline justify-between gap-3 border-t border-border pt-4">
+        {/* `max-sm:flex-wrap`: with a large MRR + asking price the two figures wrap onto separate
+            lines on a phone rather than compressing into each other. */}
+        <div className="mt-[18px] flex items-baseline justify-between gap-3 border-t border-border pt-4 max-sm:flex-wrap">
           {mrr ? (
             <>
               <div>
@@ -146,8 +156,10 @@ export function ListingCard({ product, index = 0 }: { product: FeaturedProduct; 
           )}
         </div>
 
-        {/* Always visible — never revealed on hover, so the card never reflows. */}
-        <span className="mt-[18px] block rounded-md bg-primary py-[11px] text-center text-[15px] font-semibold text-primary-foreground transition-colors duration-150 group-hover/card:bg-primary-emphasis">
+        {/* Always visible — never revealed on hover, so the card never reflows.
+            On phones it becomes a centered flex box with a guaranteed 48px height (> the 44px tap
+            minimum); it is already full-width in both cases. */}
+        <span className="mt-[18px] block rounded-md bg-primary py-[11px] text-center text-[15px] font-semibold text-primary-foreground transition-colors duration-150 group-hover/card:bg-primary-emphasis max-sm:flex max-sm:min-h-[48px] max-sm:items-center max-sm:justify-center">
           View listing →
         </span>
       </div>

@@ -45,7 +45,7 @@ export function InfoHint({ label, children }: { label?: string; children: string
         id={id}
         role="tooltip"
         className={cn(
-          "pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-[240px] -translate-x-1/2 rounded-md border border-border bg-canvas px-3 py-2 text-[12.5px] leading-[1.45] font-normal text-fg shadow-mega transition-opacity",
+          "pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-[min(240px,60vw)] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-canvas px-3 py-2 text-[12.5px] leading-[1.45] font-normal text-fg shadow-mega transition-opacity sm:w-[240px]",
           open ? "opacity-100" : "sr-only opacity-0",
         )}
       >
