@@ -10,6 +10,20 @@ import { categoryInitials, formatCompactMoney, type CategoryWithCount, type Feat
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 
+/**
+ * The signed-in user's name as a terminal handle: "Michael Khalaf" → "michael_khalaf".
+ * Lowercased, spaces → underscores, anything non-handle-ish dropped. Purely presentational — the
+ * real name is still what the UserMenu and the account page show.
+ */
+function terminalHandle(name: string): string {
+  const handle = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "");
+  return handle === "" ? "user" : handle;
+}
+
 /** Nav links. "How it works" anchors a landing section; "Guidelines" is a real page. */
 const NAV_LINKS = [
   { href: "/sell", label: "Sell your SaaS" },
@@ -176,7 +190,29 @@ export function Header({
               {!hydrated ? (
                 <div className="h-[38px] w-[150px]" aria-hidden />
               ) : user ? (
-                <UserMenu user={user} />
+                <div className="flex items-center gap-2.5">
+                  {/*
+                    Signed-in identity in the site's coding voice: a mono terminal prompt with the
+                    user's handle and a blinking block cursor. `.anim-blink` is already disabled
+                    under prefers-reduced-motion, so the cursor renders solid (never flickering) for
+                    users who ask for less motion. Hidden below `xl` so it never crowds the nav.
+                  */}
+                  <span
+                    className="mono hidden items-center gap-0.5 text-[12.5px] text-fg-muted xl:inline-flex"
+                    title={user.name}
+                  >
+                    <span className="text-accent">~/</span>
+                    <span className="max-w-[14ch] truncate font-medium text-primary">
+                      {terminalHandle(user.name)}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="anim-blink ml-0.5 inline-block h-[13px] w-[7px] bg-accent align-middle"
+                    />
+                  </span>
+
+                  <UserMenu user={user} />
+                </div>
               ) : (
                 <>
                   <Link

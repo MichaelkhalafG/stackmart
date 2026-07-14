@@ -3,10 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, Info, ShieldCheck } from "lucide-react";
+import { AlertCircle, Check, Info, ShieldCheck } from "lucide-react";
 
 import { api, ApiError, toFormData } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import {
+  email as emailRule,
+  firstError,
+  httpsUrl,
+  maxLength,
+  minLength,
+  money,
+  required,
+  validateFile,
+  validateFiles,
+  wholeNumber,
+} from "@/lib/validation";
 import { Alert, ErrorSummary } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -51,6 +63,8 @@ const FIELD_ORDER = [
   "url",
   "asking_price_cents",
   "mrr_cents",
+  "metric_users",
+  "metric_traffic",
   "images",
   "description",
   "deliverable",
@@ -58,10 +72,176 @@ const FIELD_ORDER = [
   "payout_method",
   "payout_holder_name",
   "payout_identifier",
+  "payout_bank_name",
   "terms_accepted",
 ] as const;
 
+type FieldKey = (typeof FIELD_ORDER)[number];
+
+/**
+ * Two client fields sit under a nested server key (`metrics[...]`); every other field's client key
+ * IS its 422 key (`name`, `email`, `project_name`, `url`, `asking_price_cents`, `mrr_cents`,
+ * `description`, …) — that mapping is what `errorFor` walks, so a server 422 always lands on the
+ * control that caused it.
+ */
+const SERVER_KEY: Partial<Record<FieldKey, string>> = {
+  metric_users: "metrics.users",
+  metric_traffic: "metrics.traffic",
+};
+
 const DESCRIPTION_TARGET = 600;
+const DESCRIPTION_MIN = 50;
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const README_EXTENSIONS = [".md", ".txt", ".pdf"];
+
+/* ── Client-side validation ──────────────────────────────────────────────────────────────────
+   Every rule below is a shared validator from `@/lib/validation`, so the copy matches the rest of
+   the app: say what is wrong AND how to fix it. Rules run on BLUR (per field, once touched) and
+   again on SUBMIT (all of them) — never on keystroke. A failed submit never reaches the network.  */
+
+/** Everything the rules read — passed explicitly so a file/select `onChange` can validate its NEW
+ *  value before React has committed the state update. */
+type Values = {
+  name: string;
+  email: string;
+  projectName: string;
+  categoryId: string;
+  url: string;
+  askingPrice: string;
+  mrr: string;
+  metricUsers: string;
+  metricTraffic: string;
+  images: File[];
+  description: string;
+  deliverable: File | null;
+  readme: File | null;
+  payoutMethod: "bank" | "paypal";
+  payoutHolder: string;
+  payoutIdentifier: string;
+  termsAccepted: boolean;
+};
+
+/** The whole form's rules in one place — `Object.keys()` of the result is the submit gate. */
+function computeErrors(v: Values): Partial<Record<FieldKey, string>> {
+  const errors: Partial<Record<FieldKey, string>> = {};
+
+  const set = (field: FieldKey, message: string | undefined) => {
+    if (message) errors[field] = message;
+  };
+
+  set(
+    "name",
+    firstError(
+      v.name,
+      required("Enter your name"),
+      maxLength(120, "Name must be 120 characters or fewer"),
+    ),
+  );
+  set("email", firstError(v.email, emailRule()));
+  set(
+    "project_name",
+    firstError(
+      v.projectName,
+      required("Enter your project name"),
+      minLength(2, "Project name must be at least 2 characters"),
+      maxLength(120, "Project name must be 120 characters or fewer"),
+    ),
+  );
+  set(
+    "category_id",
+    firstError(v.categoryId, required("Choose the category buyers will find your listing in")),
+  );
+  set("url", firstError(v.url, httpsUrl("Enter a valid URL like inboxly.app")));
+
+  // Money is typed in DOLLARS and submitted as integer cents — the rules read dollars.
+  set(
+    "asking_price_cents",
+    firstError(v.askingPrice, money({ min: 0, required: true, label: "Asking price" })),
+  );
+  set(
+    "mrr_cents",
+    firstError(
+      v.mrr,
+      required("Enter your monthly recurring revenue — type 0 if it isn't earning yet"),
+      money({ label: "Monthly recurring revenue" }),
+    ),
+  );
+
+  set("metric_users", firstError(v.metricUsers, wholeNumber("Active users")));
+  set("metric_traffic", firstError(v.metricTraffic, wholeNumber("Monthly traffic")));
+
+  set(
+    "images",
+    v.images.length === 0
+      ? "Add at least one product image"
+      : validateFiles(v.images, {
+          extensions: IMAGE_EXTENSIONS,
+          maxBytes: MAX_IMAGE_BYTES,
+          maxCount: MAX_IMAGES,
+          label: "Product images",
+        }),
+  );
+
+  set(
+    "description",
+    firstError(
+      v.description,
+      required("Add a description so buyers know what they're getting"),
+      minLength(
+        DESCRIPTION_MIN,
+        `Description must be at least ${DESCRIPTION_MIN} characters so buyers know what they're getting`,
+      ),
+    ),
+  );
+
+  set(
+    "deliverable",
+    v.deliverable
+      ? validateFile(v.deliverable, {
+          extensions: [".zip"],
+          maxBytes: MAX_ZIP_BYTES,
+          label: "Deliverable",
+        })
+      : "Upload the deliverable as a .zip file (max 100 MB)",
+  );
+
+  set(
+    "readme",
+    v.readme
+      ? validateFile(v.readme, {
+          extensions: README_EXTENSIONS,
+          maxBytes: MAX_README_BYTES,
+          label: "Verification file",
+        })
+      : "Upload a verification file (.md, .txt or .pdf) so our team can check your project",
+  );
+
+  set(
+    "payout_holder_name",
+    firstError(v.payoutHolder, required("Enter the name on the payout account")),
+  );
+  set(
+    "payout_identifier",
+    v.payoutMethod === "bank"
+      ? firstError(
+          v.payoutIdentifier,
+          required("Enter the IBAN or account number we should transfer to"),
+        )
+      : firstError(
+          v.payoutIdentifier,
+          required("Enter the PayPal address we should transfer to"),
+          emailRule(),
+        ),
+  );
+
+  set(
+    "terms_accepted",
+    v.termsAccepted ? undefined : "Confirm your listing details are accurate before submitting",
+  );
+
+  return errors;
+}
 
 /** Dollars string → integer cents (the contract sends *_cents). Empty/invalid/≤0 → 0. */
 function toCents(dollars: string): number {
@@ -161,9 +341,11 @@ function ProgressRail({ active, onJump }: { active: number; onJump: (index: numb
  * Laravel reads them back).
  *
  * Money fields collect DOLLARS but submit integer `*_cents` — the conversion is shown live under
- * each control. Client-side validation mirrors the server rules (required uploads, ≥1 image, file
- * types and sizes) so the seller isn't bounced by a 422 after a long upload; any server 422 still
- * wins and is keyed back to its field via `ApiError.errors`.
+ * each control. Validation (`@/lib/validation`) runs on BLUR per field and again on SUBMIT for all
+ * of them — never on keystroke — and mirrors the server rules (required uploads, ≥1 image, file
+ * types and sizes), so a failed submit never reaches the network and the seller isn't bounced by a
+ * 422 after a long upload. A client rule wins where it fires; otherwise the server's 422 shows,
+ * keyed back to its field via `ApiError.errors`.
  *
  * Presentation follows "Forms & Utility reference §02": a bordered card of numbered sections split
  * by 1px dividers, a canvas-subtle action footer, and a sticky progress rail beside it (≥lg).
@@ -200,7 +382,11 @@ export function SellForm() {
   const [payoutBank, setPayoutBank] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
 
-  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
+  /** Client rule failures, keyed by field. A field only SHOWS its message once it's `touched`. */
+  const [clientErrors, setClientErrors] = useState<Partial<Record<FieldKey, string>>>({});
+  const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  /** Bumped by a blocked submit — the effect below scrolls/focuses the summary once it has rendered. */
+  const [summarySignal, setSummarySignal] = useState(0);
   const [active, setActive] = useState(0);
 
   const categories = useQuery({
@@ -293,70 +479,73 @@ export function SellForm() {
   const generalError = apiError && !apiError.isValidationError ? apiError.message : undefined;
 
   /**
-   * The message for a field: a client-side error first (it fired before the request), otherwise the
-   * server's. `images` also absorbs the per-file keys Laravel returns (`images.0`, `images.1`, …).
+   * The message a field shows. Precedence:
+   *   1. its client rule (submit-time, or blur-time once the field is `touched`) — it fired here,
+   *   2. otherwise the server's 422 for that field (`images` also absorbs the per-file keys Laravel
+   *      returns: `images.0`, `images.1`, …; the two metric fields map onto `metrics.*`).
    */
-  function errorFor(field: string): string | undefined {
-    if (clientErrors[field]) return clientErrors[field];
+  function errorFor(field: FieldKey): string | undefined {
+    if (touched[field] && clientErrors[field]) return clientErrors[field];
     if (!serverErrors) return undefined;
-    if (serverErrors[field]?.[0]) return serverErrors[field][0];
 
-    const nested = Object.keys(serverErrors).find((key) => key.startsWith(`${field}.`));
+    const key = SERVER_KEY[field] ?? field;
+    if (serverErrors[key]?.[0]) return serverErrors[key][0];
+
+    const nested = Object.keys(serverErrors).find((name) => name.startsWith(`${key}.`));
     return nested ? serverErrors[nested][0] : undefined;
   }
 
-  const summary = FIELD_ORDER.map((field) => errorFor(field))
-    .filter((message): message is string => Boolean(message))
-    .map((message) => ({ message }));
+  const summary = Array.from(
+    new Set(FIELD_ORDER.map((field) => errorFor(field)).filter(Boolean) as string[]),
+  ).map((message) => ({ message }));
 
-  /** Mirrors the server rules so a long upload is never wasted on a predictable 422. */
-  function validate(): Record<string, string> {
-    const errors: Record<string, string> = {};
-
-    if (!name.trim()) errors.name = "Your name is required.";
-    if (!email.trim()) errors.email = "Your email is required.";
-    if (!projectName.trim()) errors.project_name = "The project name is required.";
-    if (!categoryId) errors.category_id = "Choose the category your product belongs in.";
-    if (!description.trim()) errors.description = "Describe what you're selling.";
-
-    if (!deliverable) {
-      errors.deliverable = "Attach the deliverable .zip — buyers receive this file.";
-    } else if (!deliverable.name.toLowerCase().endsWith(".zip")) {
-      errors.deliverable = "The deliverable must be a .zip archive.";
-    } else if (deliverable.size > MAX_ZIP_BYTES) {
-      errors.deliverable = "The deliverable may not be larger than 100 MB.";
-    }
-
-    if (!readme) {
-      errors.readme = "Attach a README so our team can verify the listing.";
-    } else if (!/\.(md|txt|pdf)$/i.test(readme.name)) {
-      errors.readme = "The README must be a .md, .txt or .pdf file.";
-    } else if (readme.size > MAX_README_BYTES) {
-      errors.readme = "The README may not be larger than 10 MB.";
-    }
-
-    if (images.length === 0) {
-      errors.images = "Add at least one product image.";
-    } else if (images.length > MAX_IMAGES) {
-      errors.images = `Add at most ${MAX_IMAGES} images.`;
-    } else if (images.some((image) => image.size > MAX_IMAGE_BYTES)) {
-      errors.images = "Each image may not be larger than 5 MB.";
-    }
-
-    if (!payoutHolder.trim()) errors.payout_holder_name = "Tell us who the account belongs to.";
-    if (!payoutIdentifier.trim()) {
-      errors.payout_identifier =
-        payoutMethod === "bank"
-          ? "Enter the IBAN or account number we should transfer to."
-          : "Enter the PayPal address we should transfer to.";
-    }
-
-    if (!termsAccepted) {
-      errors.terms_accepted = "Please confirm your listing information is accurate.";
-    }
-
-    return errors;
+  /** The live values the rules read. */
+  function currentValues(): Values {
+    return {
+      name,
+      email,
+      projectName,
+      categoryId,
+      url,
+      askingPrice,
+      mrr,
+      metricUsers,
+      metricTraffic,
+      images,
+      description,
+      deliverable,
+      readme,
+      payoutMethod,
+      payoutHolder,
+      payoutIdentifier,
+      termsAccepted,
+    };
   }
+
+  /**
+   * Validate ONE field and mark it touched — called from a control's `onBlur` (text) or from its
+   * `onChange` for the discrete controls (select, files, checkbox), where `patch` carries the new
+   * value React hasn't committed yet. Never called per keystroke.
+   */
+  function check(field: FieldKey, patch?: Partial<Values>) {
+    const message = computeErrors({ ...currentValues(), ...patch })[field];
+
+    setTouched((previous) => ({ ...previous, [field]: true }));
+    setClientErrors((previous) => {
+      const next = { ...previous };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
+    });
+  }
+
+  // A blocked submit renders the summary in the same commit; focus it once it's in the DOM.
+  useEffect(() => {
+    if (summarySignal === 0) return;
+    const node = document.getElementById("sell-errors");
+    node?.scrollIntoView({ block: "center", behavior: "smooth" });
+    node?.focus({ preventScroll: true });
+  }, [summarySignal]);
 
   function clearForm() {
     setName("");
@@ -381,6 +570,8 @@ export function SellForm() {
     setPayoutBank("");
     setTermsAccepted(false);
     setClientErrors({});
+    setTouched({});
+    setSummarySignal(0);
     mutation.reset();
   }
 
@@ -439,12 +630,21 @@ export function SellForm() {
         onSubmit={(event) => {
           event.preventDefault();
 
-          const errors = validate();
+          // Submit re-runs every rule — a field the seller never visited still gets checked.
+          const errors = computeErrors(currentValues());
+          const allTouched: Partial<Record<FieldKey, boolean>> = {};
+          FIELD_ORDER.forEach((field) => {
+            allTouched[field] = true;
+          });
+
           setClientErrors(errors);
+          setTouched(allTouched);
 
           if (Object.keys(errors).length > 0) {
-            // Send focus to the summary rather than uploading 100 MB just to be rejected.
-            document.getElementById("sell-errors")?.scrollIntoView({ block: "center" });
+            // Never call the API: send the seller to the summary rather than uploading 100 MB just
+            // to be rejected. Any stale 422 from an earlier attempt goes with it.
+            mutation.reset();
+            setSummarySignal((signal) => signal + 1);
             return;
           }
 
@@ -455,7 +655,8 @@ export function SellForm() {
         {generalError || summary.length > 0 ? (
           <div
             id="sell-errors"
-            className="flex scroll-mt-24 flex-col gap-4 border-b border-border p-6 sm:p-8 lg:px-10 lg:pt-10"
+            tabIndex={-1}
+            className="flex scroll-mt-24 flex-col gap-4 border-b border-border p-6 outline-none sm:p-8 lg:px-10 lg:pt-10"
           >
             {generalError ? (
               <Alert variant="error" title="We couldn't send your submission">
@@ -474,7 +675,12 @@ export function SellForm() {
         >
           <FormSection step={STEPS[0].step} title={STEPS[0].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
-              <Field label="Your name" required error={errorFor("name")}>
+              <Field
+                label="Your name"
+                required
+                helper="The person our review team will deal with. Not shown on your listing."
+                error={errorFor("name")}
+              >
                 {(props) => (
                   <Input
                     {...props}
@@ -483,6 +689,7 @@ export function SellForm() {
                     placeholder="Jordan Ellis"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
+                    onBlur={() => check("name")}
                   />
                 )}
               </Field>
@@ -490,7 +697,7 @@ export function SellForm() {
               <Field
                 label="Email"
                 required
-                helper="We'll only use this to follow up about your submission."
+                helper="We'll only use this to follow up about your submission — and to send proof of payout after a sale."
                 error={errorFor("email")}
               >
                 {(props) => (
@@ -502,6 +709,7 @@ export function SellForm() {
                     placeholder="you@company.com"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
+                    onBlur={() => check("email")}
                   />
                 )}
               </Field>
@@ -521,6 +729,7 @@ export function SellForm() {
                     placeholder="Inboxly"
                     value={projectName}
                     onChange={(event) => setProjectName(event.target.value)}
+                    onBlur={() => check("project_name")}
                   />
                 )}
               </Field>
@@ -531,7 +740,7 @@ export function SellForm() {
                 helper={
                   categories.isError
                     ? "Categories couldn't load — refresh and try again."
-                    : "Where buyers will find your listing."
+                    : "Where buyers will find your listing. Pick the closest fit — our team can move it."
                 }
                 error={errorFor("category_id")}
               >
@@ -539,7 +748,10 @@ export function SellForm() {
                   <NativeSelect
                     {...props}
                     value={categoryId}
-                    onChange={setCategoryId}
+                    onChange={(value) => {
+                      setCategoryId(value);
+                      check("category_id", { categoryId: value });
+                    }}
                     disabled={categories.isPending || categories.isError}
                     placeholder={categories.isPending ? "Loading categories…" : "Choose a category…"}
                     options={categoryOptions}
@@ -551,7 +763,8 @@ export function SellForm() {
             <Field
               className="mt-5"
               label="Live URL"
-              helper="Optional — the live demo or the repository. We verify ownership after submission."
+              helper="Optional — the live demo or the repository. We verify ownership after you submit."
+              tooltip="Type the host only — we add https:// for you. After you submit, our team checks that the site or repo really is yours (a DNS record, a file we ask you to upload, or repo access) before the listing goes live."
               error={errorFor("url")}
             >
               {(props) => (
@@ -564,6 +777,7 @@ export function SellForm() {
                   placeholder="inboxly.app"
                   value={url}
                   onChange={(event) => setUrl(event.target.value)}
+                  onBlur={() => check("url")}
                 />
               )}
             </Field>
@@ -580,7 +794,13 @@ export function SellForm() {
         >
           <FormSection step={STEPS[1].step} title={STEPS[1].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
-              <Field label="Asking price" required error={errorFor("asking_price_cents")}>
+              <Field
+                label="Asking price"
+                required
+                helper="In USD. This is the price buyers pay to acquire the product."
+                tooltip="Type the amount in DOLLARS — 12000 means $12,000, not $120. We convert it to cents for you and show the exact figure we submit under the box."
+                error={errorFor("asking_price_cents")}
+              >
                 {(props) => (
                   <div className="flex flex-col gap-[7px]">
                     <MoneyInput
@@ -590,13 +810,20 @@ export function SellForm() {
                       placeholder="0.00"
                       value={askingPrice}
                       onChange={(event) => setAskingPrice(event.target.value)}
+                      onBlur={() => check("asking_price_cents")}
                     />
                     <CentsHint value={askingPrice} />
                   </div>
                 )}
               </Field>
 
-              <Field label="Monthly recurring revenue" required error={errorFor("mrr_cents")}>
+              <Field
+                label="Monthly recurring revenue"
+                required
+                helper="Monthly recurring revenue, if any. Enter 0 if it isn't earning yet."
+                tooltip="In DOLLARS per month, like the asking price. A pre-revenue product is fine — enter 0 and we simply won't show an MRR figure on your listing card. Whatever you enter here is what our team verifies."
+                error={errorFor("mrr_cents")}
+              >
                 {(props) => (
                   <div className="flex flex-col gap-[7px]">
                     <MoneyInput
@@ -606,6 +833,7 @@ export function SellForm() {
                       placeholder="0.00"
                       value={mrr}
                       onChange={(event) => setMrr(event.target.value)}
+                      onBlur={() => check("mrr_cents")}
                     />
                     <CentsHint value={mrr} />
                   </div>
@@ -621,7 +849,11 @@ export function SellForm() {
             </p>
 
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
-              <Field label="Active users" helper="Paying or active accounts." error={errorFor("metrics")}>
+              <Field
+                label="Active users"
+                helper="Paying or active accounts — a whole number, no commas."
+                error={errorFor("metric_users")}
+              >
                 {(props) => (
                   <Input
                     {...props}
@@ -629,11 +861,16 @@ export function SellForm() {
                     placeholder="2100"
                     value={metricUsers}
                     onChange={(event) => setMetricUsers(event.target.value)}
+                    onBlur={() => check("metric_users")}
                   />
                 )}
               </Field>
 
-              <Field label="Monthly traffic" helper="Visits per month.">
+              <Field
+                label="Monthly traffic"
+                helper="Visits per month — a whole number, no commas."
+                error={errorFor("metric_traffic")}
+              >
                 {(props) => (
                   <Input
                     {...props}
@@ -641,6 +878,7 @@ export function SellForm() {
                     placeholder="48000"
                     value={metricTraffic}
                     onChange={(event) => setMetricTraffic(event.target.value)}
+                    onBlur={() => check("metric_traffic")}
                   />
                 )}
               </Field>
@@ -696,39 +934,45 @@ export function SellForm() {
               className="mt-6"
               label="Product images"
               required
-              helper={`Shown in the listing gallery. At least 1, up to ${MAX_IMAGES} · JPG, PNG or WEBP · max 5 MB each.`}
+              helper={`Screenshots buyers see on your listing. At least 1, up to ${MAX_IMAGES} · JPG, PNG or WEBP · max 5 MB each.`}
+              tooltip="The gallery on your listing page — the first image is the card thumbnail buyers see in the marketplace. Show the real product: the dashboard, the key screens, not a logo."
               error={errorFor("images")}
             >
               {() => (
                 <ImageGalleryField
                   images={images}
-                  onChange={setImages}
+                  onChange={(next) => {
+                    setImages(next);
+                    check("images", { images: next });
+                  }}
                   max={MAX_IMAGES}
                   invalid={Boolean(errorFor("images"))}
                 />
               )}
             </Field>
 
-            <Field className="mt-6" label="Description" required error={errorFor("description")}>
+            <Field
+              className="mt-6"
+              label="Description"
+              required
+              helper={`What it does, who it's for, what's included in the sale. At least ${DESCRIPTION_MIN} characters — around ${DESCRIPTION_TARGET} reads best.`}
+              labelSuffix={
+                <span className="mono text-xs text-fg-muted">
+                  {description.length} / {DESCRIPTION_TARGET}
+                </span>
+              }
+              error={errorFor("description")}
+            >
               {(props) => (
-                <div className="flex flex-col gap-1.5">
-                  <Textarea
-                    {...props}
-                    name="description"
-                    rows={5}
-                    placeholder="What does it do, who is it for, what's included in the sale?"
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                  />
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[12.5px] text-fg-muted">
-                      What it does, who it&apos;s for, what&apos;s included in the sale.
-                    </span>
-                    <span className="mono text-xs text-fg-muted">
-                      {description.length} / {DESCRIPTION_TARGET}
-                    </span>
-                  </div>
-                </div>
+                <Textarea
+                  {...props}
+                  name="description"
+                  rows={5}
+                  placeholder="What does it do, who is it for, what's included in the sale?"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  onBlur={() => check("description")}
+                />
               )}
             </Field>
           </FormSection>
@@ -751,13 +995,17 @@ export function SellForm() {
             <Field
               label="Deliverable (.zip)"
               required
-              helper="The code the buyer receives. Max 100 MB."
+              helper="The full source code the buyer receives after purchase. ZIP, max 100 MB."
+              tooltip="This exact archive is what a buyer downloads the moment they pay, so zip up everything they need to run the product: source, migrations, env example, setup notes. It stays private until a sale completes."
               error={errorFor("deliverable")}
             >
               {() => (
                 <SingleFileField
                   file={deliverable}
-                  onChange={setDeliverable}
+                  onChange={(file) => {
+                    setDeliverable(file);
+                    check("deliverable", { deliverable: file });
+                  }}
                   accept=".zip,application/zip"
                   hint="ZIP archive · up to 100 MB"
                   invalid={Boolean(errorFor("deliverable"))}
@@ -769,13 +1017,17 @@ export function SellForm() {
               className="mt-6"
               label="Verification README"
               required
-              helper="How our team verifies the listing: repo access, analytics, staging credentials. Max 10 MB."
+              helper="Explain how our team can verify your project — repo access, analytics screenshots, staging credentials, how to run it. MD, TXT or PDF, max 10 MB."
+              tooltip="Verification access = whatever proves the product and its numbers are real and yours: read access to the repo, a screenshot of the analytics or revenue dashboard, staging logins, and the steps to run it locally. Reviewers never publish any of it."
               error={errorFor("readme")}
             >
               {() => (
                 <SingleFileField
                   file={readme}
-                  onChange={setReadme}
+                  onChange={(file) => {
+                    setReadme(file);
+                    check("readme", { readme: file });
+                  }}
                   accept=".md,.txt,.pdf,text/markdown,text/plain,application/pdf"
                   hint="MD · TXT · PDF · up to 10 MB"
                   invalid={Boolean(errorFor("readme"))}
@@ -800,12 +1052,17 @@ export function SellForm() {
                 strokeWidth={2.2}
                 aria-hidden
               />
-              This is where MDN STACKMART sends your money after a sale. We take a flat 20%
-              commission; you keep 80% of every sale. Your details are encrypted and only ever seen
-              by our payouts team.
+              Where we send your money after a sale. MDN STACKMART takes a flat 20% commission and
+              transfers the remaining 80% to the details below — the same rate for every seller.
+              Kept private: admin-only, never shown on your listing.
             </p>
 
-            <Field label="Payout method" required error={errorFor("payout_method")}>
+            <Field
+              label="Payout method"
+              required
+              tooltip="On every sale MDN STACKMART keeps a flat 20% commission and transfers the other 80% to these details — one rate for everyone, no plans and no tiers. We email you proof of the transfer once it's sent."
+              error={errorFor("payout_method")}
+            >
               {() => (
                 <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   {(
@@ -830,7 +1087,14 @@ export function SellForm() {
                           name="payout_method"
                           value={option.value}
                           checked={selected}
-                          onChange={() => setPayoutMethod(option.value)}
+                          onChange={() => {
+                            setPayoutMethod(option.value);
+                            // The identifier's rule depends on the method (IBAN vs email) — re-check
+                            // it, but only if the seller has already been there.
+                            if (touched.payout_identifier) {
+                              check("payout_identifier", { payoutMethod: option.value });
+                            }
+                          }}
                           className="peer sr-only"
                         />
                         <span
@@ -861,7 +1125,7 @@ export function SellForm() {
               <Field
                 label="Account holder"
                 required
-                helper="The name on the account."
+                helper="The exact name on the account — a mismatch delays the transfer."
                 error={errorFor("payout_holder_name")}
               >
                 {(props) => (
@@ -872,6 +1136,7 @@ export function SellForm() {
                     placeholder="Jordan Ellis"
                     value={payoutHolder}
                     onChange={(event) => setPayoutHolder(event.target.value)}
+                    onBlur={() => check("payout_holder_name")}
                   />
                 )}
               </Field>
@@ -879,7 +1144,11 @@ export function SellForm() {
               <Field
                 label={payoutMethod === "bank" ? "IBAN / account number" : "PayPal email"}
                 required
-                helper="Encrypted at rest. Never shown publicly."
+                helper={
+                  payoutMethod === "bank"
+                    ? "The account we transfer your 80% to. Kept private — admin-only, never shown on your listing."
+                    : "The PayPal address we transfer your 80% to. Kept private — admin-only, never shown on your listing."
+                }
                 error={errorFor("payout_identifier")}
               >
                 {(props) => (
@@ -892,6 +1161,7 @@ export function SellForm() {
                     }
                     value={payoutIdentifier}
                     onChange={(event) => setPayoutIdentifier(event.target.value)}
+                    onBlur={() => check("payout_identifier")}
                   />
                 )}
               </Field>
@@ -901,7 +1171,7 @@ export function SellForm() {
               <Field
                 className="mt-5"
                 label="Bank name"
-                helper="Optional — helps us route the transfer."
+                helper="Optional — helps us route the transfer faster."
                 error={errorFor("payout_bank_name")}
               >
                 {(props) => (
@@ -919,7 +1189,12 @@ export function SellForm() {
             <div className="mt-7 rounded-md border border-border bg-canvas-subtle p-4">
               <Checkbox
                 checked={termsAccepted}
-                onChange={(event) => setTermsAccepted(event.target.checked)}
+                aria-invalid={Boolean(errorFor("terms_accepted"))}
+                aria-describedby={errorFor("terms_accepted") ? "terms-error" : undefined}
+                onChange={(event) => {
+                  setTermsAccepted(event.target.checked);
+                  check("terms_accepted", { termsAccepted: event.target.checked });
+                }}
                 label={
                   <span className="text-[13.5px] leading-[1.5] text-fg">
                     I confirm all listing information is accurate, I own the code I&apos;m selling,
@@ -928,7 +1203,13 @@ export function SellForm() {
                 }
               />
               {errorFor("terms_accepted") ? (
-                <p className="mt-2 text-[12.5px] text-danger">{errorFor("terms_accepted")}</p>
+                <p
+                  id="terms-error"
+                  className="mt-2 flex items-center gap-1.5 text-[12.5px] text-danger"
+                >
+                  <AlertCircle className="size-[13px] shrink-0" strokeWidth={2.4} aria-hidden />
+                  {errorFor("terms_accepted")}
+                </p>
               ) : null}
             </div>
           </FormSection>

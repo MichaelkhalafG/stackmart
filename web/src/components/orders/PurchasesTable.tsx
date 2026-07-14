@@ -134,11 +134,8 @@ export function PurchasesTable() {
               <TableCell className="text-right">
                 {order.status === "paid" ? (
                   <div className="flex justify-end">
-                    <DownloadButton
-                      orderId={order.id}
-                      label="Download"
-                      filename={`${order.product.slug}.zip`}
-                    />
+                    {/* Goes to the license-gated download page — never an immediate download. */}
+                    <DownloadButton orderId={order.id} label="Download" size="sm" />
                   </div>
                 ) : (
                   <span className="text-fg-muted">—</span>

@@ -8,9 +8,10 @@ import { Logo } from "./Logo";
  * navy variant here (the `light` variant exists for dark surfaces).
  *
  * The Resources column now resolves to the real `/guidelines` page (the buyer/seller guides and the
- * FAQ are its sections, linked by anchor). The remaining marketing/legal destinations (Terms,
- * Privacy, Careers, Blog, Contact) are still `href="#"` placeholders, as in the approved design —
- * they become real links when those pages ship (S5.04 + marketing).
+ * FAQ are its sections, linked by anchor), and the legal bar resolves to the real `/terms` and
+ * `/privacy` pages. The remaining marketing destinations (Cookies, Careers, Blog, Contact) are
+ * still `href="#"` placeholders, as in the approved design — they become real links when those
+ * pages ship (marketing).
  */
 const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string }> }> = [
   {
@@ -44,8 +45,8 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
 ];
 
 const LEGAL = [
-  { label: "Terms", href: "#" },
-  { label: "Privacy", href: "#" },
+  { label: "Terms", href: "/terms" },
+  { label: "Privacy", href: "/privacy" },
   { label: "Cookies", href: "#" },
 ];
 

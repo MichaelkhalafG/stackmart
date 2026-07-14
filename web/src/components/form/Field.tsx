@@ -5,6 +5,7 @@ import { AlertCircle } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { InfoHint } from "./InfoHint";
 
 /**
  * Field anatomy — Forms & Utility reference §03: label (+ optional required asterisk), the control,
@@ -19,16 +20,19 @@ export function Field({
   required = false,
   helper,
   error,
+  tooltip,
   className,
   labelSuffix,
   children,
 }: {
   label: string;
   required?: boolean;
-  /** Shown under the control when there is no error. */
+  /** Shown under the control when there is no error. Explains what's expected BEFORE they error. */
   helper?: ReactNode;
   /** When set, the control turns danger and this replaces the helper. */
   error?: string | null;
+  /** Optional "what does this mean?" explanation, shown as an accessible tooltip by the label. */
+  tooltip?: string;
   className?: string;
   /** Optional element pinned to the right of the label row (e.g. a "Forgot?" link). */
   labelSuffix?: ReactNode;
@@ -53,6 +57,7 @@ export function Field({
               *
             </span>
           ) : null}
+          {tooltip ? <InfoHint label={`What is "${label}"?`}>{tooltip}</InfoHint> : null}
         </Label>
         {labelSuffix}
       </div>

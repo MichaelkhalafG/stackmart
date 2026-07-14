@@ -64,23 +64,19 @@ const SELLER_FAQ: Faq[] = [
   },
   {
     q: "What do I need to submit?",
-    a: "Your code as a ZIP, images of the product, and a README that explains how we can verify what you are claiming (how to run it, how to reach the metrics, what to look at). Alongside that: your tech stack, your metrics, a category, and a description. The more verifiable your README makes your claims, the faster review goes.",
+    a: "The deliverable code ZIP, images of the product, and a README that explains how we can verify what you are claiming (how to run it, how to reach the metrics, what to look at). Alongside that: your tech stack, your business metrics, a category, a description, and your payout details. The more verifiable your README makes your claims, the faster review goes.",
   },
   {
-    q: "What is the difference between the Basic and Premium plans?",
-    a: "It is commission versus reach. On Basic, MDN STACKMART takes 20% of the sale. On Premium we take 30%, and in exchange your listing is surfaced in the Featured section on the home page and is marked as Recommended. Premium buys you placement in front of every visitor who lands on the site; Basic keeps more of the sale price.",
-  },
-  {
-    q: "Which plan should I choose?",
-    a: "If your product speaks for itself and you are comfortable competing in the marketplace listing on its own merits, Basic keeps an extra 10% of the sale in your pocket. If you want to sell faster, or your product sits in a crowded category where visibility is the bottleneck, Premium's Featured placement and Recommended mark are what you are paying the extra commission for.",
+    q: "What commission does MDN STACKMART take?",
+    a: "A flat 20% of the sale price — the same rate for every seller. There are no plans, no tiers, and no premium upgrade to buy: everyone gets the same vetting, the same listing, and the same 20%. On a $10,000 sale we keep $2,000 and you receive $8,000.",
   },
   {
     q: "How and when do I get paid?",
-    a: "You give us your payout details as part of your submission. After your product sells and payment clears, MDN STACKMART transfers your payout — the sale price minus your plan's commission — to those details, and emails you proof of the transfer for your records.",
+    a: "You give us your payout details as part of your submission. After your product sells and the payment clears, MDN STACKMART takes its flat 20% commission and transfers the remaining 80% to those details, then emails you proof of the transfer for your records.",
   },
   {
-    q: "How much do I actually receive?",
-    a: "Your sale price minus commission. On Basic that is 80% of the sale; on Premium it is 70%. The commission is the only cut we take — there is no listing fee and no charge for being reviewed, whether or not you are approved.",
+    q: "Are there any other fees?",
+    a: "No. The 20% commission on a completed sale is the only cut we take. There is no listing fee and no charge for being reviewed — whether we approve your submission or not, submitting costs you nothing.",
   },
   {
     q: "What happens during review?",

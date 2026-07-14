@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Container } from "@/components/layout/Container";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -20,8 +21,11 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
+  // The 404 is a root-level route, so it opts into the site chrome explicitly (the chrome moved out
+  // of the root layout so the (auth) group can be chrome-free).
   return (
-    <Container className="py-16">
+    <SiteChrome>
+      <Container className="py-16">
       <div className="panel-navy relative overflow-hidden rounded-md border border-border">
         <div className="motif-grid absolute inset-0" aria-hidden />
 
@@ -47,7 +51,8 @@ export default function NotFound() {
             Back to marketplace
           </Link>
         </div>
-      </div>
-    </Container>
+        </div>
+      </Container>
+    </SiteChrome>
   );
 }

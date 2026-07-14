@@ -3,9 +3,6 @@ import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 import { Providers } from "./providers";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { fetchCategoriesWithCounts, fetchFeatured } from "@/lib/catalog";
 
 /**
  * Site-wide brand faces (06 §1 Typography), self-hosted by next/font at build time — no external
@@ -36,33 +33,31 @@ export const metadata: Metadata = {
 };
 
 /**
- * Root layout.
+ * Root layout — `<html>`, `<body>`, fonts and client providers ONLY.
  *
- * The header's mega-menu is data-driven, so the categories (with their real listing counts) and the
- * top featured listing are fetched HERE, server-side and ISR-cached, then handed to the client
- * `Header`. Fetches are fail-soft — an unreachable API just yields an empty menu, never an error.
+ * It deliberately does NOT render the navbar/footer. A child layout cannot escape its parent in the
+ * App Router, so while the chrome lived here every route inherited it — including the auth routes,
+ * which must be standalone full-page screens. The chrome now lives in `<SiteChrome>`, and each route
+ * group opts in:
  *
- * NOTE: `<main>` is intentionally NOT wrapped in `<Container>`. The landing design is full-bleed
- * (edge-to-edge colour bands and gradient meshes), so the 1280px container now lives in the
- * per-section layouts — `(auth)`, `(account)`, `checkout`, `marketplace`, `listing`, `sell` — which
- * keeps every other page's width and padding exactly as before.
+ *   (public)   → SiteChrome   (landing, marketplace, listing, sell, guidelines…)
+ *   (account)  → SiteChrome + the client auth guard
+ *   checkout   → SiteChrome
+ *   not-found  → SiteChrome
+ *   (auth)     → NO chrome — full-viewport standalone auth screens
+ *
+ * `<Container>` is still applied per-section (the landing is full-bleed), unchanged.
  */
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [categories, featured] = await Promise.all([fetchCategoriesWithCounts(), fetchFeatured(1)]);
-
   // Base colors come from globals.css; the two font variables below feed --font-sans / --font-mono.
   return (
     <html lang="en" className={`h-full ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}>
       <body className="flex min-h-full flex-col antialiased">
-        <Providers>
-          <Header categories={categories} promo={featured[0] ?? null} />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

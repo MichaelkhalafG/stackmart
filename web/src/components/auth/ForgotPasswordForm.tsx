@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { email as emailValidator } from "@/lib/validation";
 
 import { AuthField, FormError } from "./AuthField";
 
@@ -20,6 +21,7 @@ const GENERIC_MESSAGE = "If the email exists, a reset link was sent. Check your 
  */
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
+  const [clientError, setClientError] = useState<string | undefined>();
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -49,15 +51,19 @@ export function ForgotPasswordForm() {
     );
   }
 
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    // Submit-time gate — same validator the field runs on blur.
+    const emailError = emailValidator()(email);
+    setClientError(emailError);
+    if (emailError) return;
+
+    mutation.mutate();
+  }
+
   return (
-    <form
-      noValidate
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        mutation.mutate();
-      }}
-    >
+    <form noValidate className="flex flex-col gap-4" onSubmit={handleSubmit}>
       {generalError ? <FormError message={generalError} /> : null}
       <AuthField
         id="email"
@@ -67,7 +73,9 @@ export function ForgotPasswordForm() {
         required
         value={email}
         onChange={setEmail}
-        error={fieldErrors?.email?.[0]}
+        validate={emailValidator()}
+        hint="We'll email a reset link to this address if an account exists."
+        error={clientError ?? fieldErrors?.email?.[0]}
       />
       <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
         Send reset link
