@@ -62,6 +62,13 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::BODY_START,
                 fn (): View => view('filament.admin.chrome'),
             )
+            // On phones the sidebar (and its header, which holds the brand) is off-canvas,
+            // so the brand would vanish. Render it in the topbar too; CSS shows this copy
+            // only below the lg breakpoint, so desktop never sees two logos.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_START,
+                fn (): View => view('filament.admin.brand', ['context' => 'topbar']),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
