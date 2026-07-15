@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
@@ -16,6 +16,7 @@ import { Blankslate } from "./Blankslate";
 import { FilterSidebar } from "./FilterSidebar";
 import { MarketplacePagination, type PaginationMeta } from "./MarketplacePagination";
 import { MarketplaceSearch } from "./MarketplaceSearch";
+import { MobileMarketplaceControls } from "./MobileMarketplaceControls";
 import { ProductGridSkeleton } from "./ProductGridSkeleton";
 import { SORT_OPTIONS, SortSelect, type SortValue } from "./SortSelect";
 
@@ -26,6 +27,26 @@ const SORT_VALUES = SORT_OPTIONS.map((option) => option.value);
 
 function parseSort(raw: string | null): SortValue {
   return raw && (SORT_VALUES as string[]).includes(raw) ? (raw as SortValue) : "newest";
+}
+
+/** Page size by form factor: a phone caps at 4 per page (no endless scroll); desktop uses 12. */
+const MOBILE_PER_PAGE = 4;
+const DESKTOP_PER_PAGE = 12;
+
+const MOBILE_QUERY = "(max-width: 767px)";
+function subscribeMobile(callback: () => void) {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mql = window.matchMedia(MOBILE_QUERY);
+  mql.addEventListener("change", callback);
+  return () => mql.removeEventListener("change", callback);
+}
+/** SSR-safe viewport check — server snapshot is `false`, the client re-reads matchMedia on mount. */
+function useIsMobile(): boolean {
+  return useSyncExternalStore(
+    subscribeMobile,
+    () => window.matchMedia(MOBILE_QUERY).matches,
+    () => false,
+  );
 }
 
 /**
@@ -47,6 +68,9 @@ export function MarketplaceBrowser() {
   const maxCents = searchParams.get("max_price") ?? "";
   const sort = parseSort(searchParams.get("sort"));
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+
+  // Phones page at 4, desktop at 12. Driven by matchMedia so it reacts to rotation/resize.
+  const perPage = useIsMobile() ? MOBILE_PER_PAGE : DESKTOP_PER_PAGE;
 
   // Write params to the URL. Any filter change resets pagination; page changes don't.
   const setParams = useCallback(
@@ -97,9 +121,10 @@ export function MarketplaceBrowser() {
     if (minCents) params.set("min_price", minCents);
     if (maxCents) params.set("max_price", maxCents);
     if (sort !== "newest") params.set("sort", sort);
+    if (perPage !== DESKTOP_PER_PAGE) params.set("per_page", String(perPage));
     if (page > 1) params.set("page", String(page));
     return params.toString();
-  }, [search, category, stack, minCents, maxCents, sort, page]);
+  }, [search, category, stack, minCents, maxCents, sort, perPage, page]);
 
   const productsQuery = useQuery({
     queryKey: ["products", apiQuery],
@@ -120,13 +145,65 @@ export function MarketplaceBrowser() {
     search || category || stack || minCents || maxCents || sort !== "newest",
   );
 
+  // Keep `page` in range when the page size changes (e.g. rotating a phone from 4→12 per page, or a
+  // deep-linked page beyond the result set): snap to the last page instead of showing an empty grid.
+  useEffect(() => {
+    if (meta && meta.total > 0 && page > meta.last_page) {
+      onPage(meta.last_page);
+    }
+  }, [meta, page, onPage]);
+
+  // Return the user to the top of the RESULTS whenever the result set changes from an action —
+  // paging, sorting, searching, or any filter apply/clear (incl. from the mobile drawer). Without
+  // this, `router.replace(..., { scroll: false })` leaves them scrolled down by the pagination and
+  // the new products load out of view above them.
+  //
+  // Keyed on the user-facing query signature, so it fires exactly on those changes and is skipped on
+  // the initial mount / a deep-linked URL. `per_page` is deliberately excluded — it changes on
+  // viewport resize (4↔12), which must NOT yank the scroll. We scroll the results section (not the
+  // document top) so the branded page header isn't re-read every time; `scroll-mt` clears the sticky
+  // header. Reduced-motion gets an instant jump instead of a smooth scroll.
+  const resultsRef = useRef<HTMLElement>(null);
+  const scrollToResults = useCallback(() => {
+    const el = resultsRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, []);
+
+  const contentKey = `${search}|${category}|${stack}|${minCents}|${maxCents}|${sort}|${page}`;
+  const lastContentKey = useRef(contentKey);
+  useEffect(() => {
+    if (lastContentKey.current === contentKey) return;
+    lastContentKey.current = contentKey;
+    scrollToResults();
+  }, [contentKey, scrollToResults]);
+
   return (
     <div className="py-2">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-fg">Marketplace</h1>
-        <p className="text-sm text-fg-muted">
-          Browse vetted micro-SaaS products, web apps, and codebases.
-        </p>
+      {/* Branded section header — the same coding language as the landing: a subtle canvas mesh
+          under a faint navy grid, a mono "terminal" line, the navy heading, and a live mono count. */}
+      <header className="mesh-categories relative mb-6 overflow-hidden rounded-2xl border border-border px-5 py-6 sm:px-8 sm:py-8">
+        <div className="mkt-grid absolute inset-0" aria-hidden />
+        <div className="relative">
+          <div className="mono mb-2 flex items-center gap-2 text-[12.5px] text-accent">
+            <span className="text-fg-muted">$</span> browse --vetted
+            <span className="anim-blink inline-block h-[13px] w-[7px] bg-accent align-middle" aria-hidden />
+          </div>
+          <h1 className="text-[1.65rem] leading-tight font-bold tracking-tight text-primary sm:text-[2rem]">
+            Marketplace
+          </h1>
+          <p className="mt-1.5 max-w-prose text-sm text-fg-muted">
+            Browse vetted micro-SaaS products, web apps, and codebases — evaluate each with a live
+            demo and repository review.
+          </p>
+          {meta ? (
+            <p className="mono mt-4 text-[13px] text-fg-muted">
+              <span className="font-semibold text-primary">{meta.total}</span> listing
+              {meta.total === 1 ? "" : "s"} available
+            </p>
+          ) : null}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[248px_1fr]">
@@ -144,8 +221,29 @@ export function MarketplaceBrowser() {
           onClear={onClear}
         />
 
-        <section className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section ref={resultsRef} className="flex scroll-mt-24 flex-col gap-4">
+          {/* MOBILE (< md): products-first. A compact sticky bar (search + sort + a Filters button
+              with a count badge) sits above the grid; Category/Stack/Price move into its drawer. */}
+          <MobileMarketplaceControls
+            search={search}
+            onSearch={onSearch}
+            sort={sort}
+            onSort={onSort}
+            categories={categories}
+            category={category}
+            stack={stack}
+            minCents={minCents}
+            maxCents={maxCents}
+            resultCount={meta?.total ?? null}
+            hasActiveFilters={hasActiveFilters}
+            onCategory={onCategory}
+            onStack={onStack}
+            onPrice={onPrice}
+            onClear={onClear}
+          />
+
+          {/* DESKTOP (md+): the original inline search + sort row, unchanged. */}
+          <div className="hidden md:flex md:items-center md:justify-between md:gap-3">
             <MarketplaceSearch value={search} onSearch={onSearch} />
             <div className="flex items-center gap-2">
               <span className="text-sm text-fg-muted">Sort</span>
@@ -153,8 +251,16 @@ export function MarketplaceBrowser() {
             </div>
           </div>
 
+          {/* MOBILE result count above the grid. */}
+          {meta && !productsQuery.isError ? (
+            <p className="-mt-1 text-sm text-fg-muted md:hidden">
+              <span className="mono font-semibold text-fg">{meta.total}</span>{" "}
+              result{meta.total === 1 ? "" : "s"}
+            </p>
+          ) : null}
+
           {productsQuery.isPending ? (
-            <ProductGridSkeleton />
+            <ProductGridSkeleton count={perPage === MOBILE_PER_PAGE ? 4 : 6} />
           ) : productsQuery.isError ? (
             <Blankslate
               icon={<PackageOpen className="size-8" />}

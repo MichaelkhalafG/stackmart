@@ -21,7 +21,8 @@ export function MetricsGrid({
   if (!metrics) return null;
 
   const cells: Array<{ label: string; value: string }> = [];
-  if (metrics.mrr != null) cells.push({ label: "MRR", value: formatPrice(metrics.mrr * 100, currency) });
+  if (metrics.mrr != null)
+    cells.push({ label: "MRR /mo", value: formatPrice(metrics.mrr * 100, currency) });
   if (metrics.profit != null)
     cells.push({ label: "Profit / mo", value: formatPrice(metrics.profit * 100, currency) });
   if (metrics.users != null) cells.push({ label: "Users", value: formatCount(metrics.users) });

@@ -1,3 +1,4 @@
+import { revenueMultiple } from "@/lib/catalog";
 import { formatPrice } from "@/components/product/MarketplaceCard";
 
 import { BuyNowButton } from "./BuyNowButton";
@@ -11,14 +12,24 @@ import type { ProductDetail } from "./types";
  * NOT built here). Server-safe wrapper; the interactive Buy Now is its own client component.
  */
 export function PurchaseSidebar({ product }: { product: ProductDetail }) {
+  // Pay-vs-earn cue: the asking price as a multiple of monthly revenue. `null` (so omitted) when
+  // the listing publishes no MRR — never divides by zero.
+  const multiple = revenueMultiple(product.price_cents, product.metrics?.mrr ?? null);
+
   return (
     <aside className="lg:sticky lg:top-20 lg:self-start">
       <div className="flex flex-col gap-4 rounded-md border border-border bg-canvas p-5">
         <div>
-          <div className="mono text-2xl font-semibold text-fg">
+          {/* Asking price = the dominant figure a buyer PAYS: labelled, navy, big and bold — set
+              clearly apart from the MRR the business EARNS (a metric in the Metrics grid). */}
+          <div className="text-[11px] tracking-[0.06em] text-fg-muted uppercase">Price</div>
+          <div className="mono mt-0.5 text-3xl font-bold text-primary">
             {formatPrice(product.price_cents, product.currency)}
           </div>
-          <p className="mt-1 text-xs text-fg-muted">
+          {multiple ? (
+            <div className="mono mt-1 text-xs text-fg-muted">{multiple}</div>
+          ) : null}
+          <p className="mt-1.5 text-xs text-fg-muted">
             One-time purchase · full source code + license key
           </p>
         </div>

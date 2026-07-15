@@ -38,12 +38,17 @@ export const metadata: Metadata = {
 export default function SellPage() {
   return (
     <div className="container-page py-10 sm:py-14">
-      <header className="mb-7 sm:mb-9">
+      <header className="mb-6 sm:mb-9">
         <p className="mono mb-2 text-[11px] tracking-[0.1em] text-accent uppercase">Sell</p>
         <h1 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.01em] text-primary">
           Submit a listing
         </h1>
-        <p className="mt-2.5 max-w-[64ch] text-base leading-[1.5] text-fg-muted">
+        {/* Compact lead on phones so the form is reached fast; the full pitch shows from md up. */}
+        <p className="mt-2.5 text-[15px] leading-[1.5] text-fg-muted md:hidden">
+          Submit your project for review — we vet every one and follow up by email. No account
+          needed · flat 20% commission when it sells.
+        </p>
+        <p className="mt-2.5 hidden max-w-[64ch] text-base leading-[1.5] text-fg-muted md:block">
           Submit your micro-SaaS, web app, or codebase for review. Attach the code, a short
           verification README and a few screenshots — the MDN STACKMART team vets every submission
           and follows up by email. No account needed. Flat 20% commission when it sells.

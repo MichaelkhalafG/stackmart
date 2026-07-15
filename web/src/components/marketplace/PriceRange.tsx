@@ -5,9 +5,16 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 
-/** Slider operates in whole dollars; the URL params `min_price`/`max_price` are in cents. */
-const MAX_DOLLARS = 30000;
-const STEP_DOLLARS = 500;
+/**
+ * Slider operates in whole dollars; the URL params `min_price`/`max_price` are in cents.
+ *
+ * The ceiling covers the real catalogue: listings now run up to ~$1.43M (asking ≈ 24–36× MRR), so
+ * the old $30,000 cap made every product above it unreachable AND excluded by any max selection —
+ * the price filter was effectively broken. $1.5M gives headroom; the two number inputs stay precise
+ * for fine control at the low end where a coarse slider step would not.
+ */
+const MAX_DOLLARS = 1_500_000;
+const STEP_DOLLARS = 5_000;
 
 function toDollars(cents: string, fallback: number): number {
   if (!cents) return fallback;

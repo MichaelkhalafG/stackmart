@@ -136,6 +136,22 @@ export function categoryInitials(name: string): string {
 }
 
 /**
+ * The pay-vs-earn cue for a price/MRR pair: the asking price expressed as a rounded multiple of
+ * monthly revenue — e.g. "≈ 30× monthly revenue". Makes the relationship between what a buyer PAYS
+ * (asking, in cents) and what the business EARNS (mrr, in dollars) legible at a glance.
+ *
+ * Returns `null` — so callers omit the hint gracefully — whenever MRR is missing or ≤ 0 (never
+ * divides by zero, never yields "≈ Infinity×") or the computed multiple is not a positive integer.
+ */
+export function revenueMultiple(priceCents: number, mrrDollars: number | null): string | null {
+  if (mrrDollars == null || mrrDollars <= 0) return null;
+  const askingDollars = (priceCents ?? 0) / 100;
+  const multiple = Math.round(askingDollars / mrrDollars);
+  if (!Number.isFinite(multiple) || multiple <= 0) return null;
+  return `≈ ${multiple}× monthly revenue`;
+}
+
+/**
  * Compact money for the design's mono figures: 12400 → "$12.4k", 420000 → "$420k".
  * Intl yields an uppercase "K"; the design uses a lowercase "k" (millions stay "M").
  */

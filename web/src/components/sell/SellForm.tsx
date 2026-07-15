@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, Check, Info, ShieldCheck } from "lucide-react";
@@ -88,6 +88,19 @@ const SERVER_KEY: Partial<Record<FieldKey, string>> = {
   metric_users: "metrics.users",
   metric_traffic: "metrics.traffic",
 };
+
+/**
+ * Which fields belong to each mobile wizard step — same grouping and order as `STEPS`. Drives the
+ * per-step "Next is blocked until these validate" gate and the server-422 → jump-to-step behaviour.
+ * DESKTOP never reads this: it renders every section at once, exactly as before.
+ */
+const STEP_FIELDS: FieldKey[][] = [
+  ["name", "email", "project_name", "category_id", "url"],
+  ["asking_price_cents", "mrr_cents", "metric_users", "metric_traffic"],
+  ["images", "description"],
+  ["deliverable", "readme"],
+  ["payout_method", "payout_holder_name", "payout_identifier", "payout_bank_name", "terms_accepted"],
+];
 
 const DESCRIPTION_TARGET = 600;
 const DESCRIPTION_MIN = 50;
@@ -388,6 +401,10 @@ export function SellForm() {
   /** Bumped by a blocked submit — the effect below scrolls/focuses the summary once it has rendered. */
   const [summarySignal, setSummarySignal] = useState(0);
   const [active, setActive] = useState(0);
+  /** Mobile-only: the current wizard step (0–4). Desktop shows every section, so it ignores this. */
+  const [step, setStep] = useState(0);
+  /** The mobile progress strip — the scroll anchor we return to when the step changes. */
+  const headerRef = useRef<HTMLDivElement>(null);
 
   const categories = useQuery({
     queryKey: ["categories"],
@@ -445,6 +462,26 @@ export function SellForm() {
           terms_accepted: termsAccepted,
         }),
       });
+    },
+    // A server 422 can reject a field on any step — send the mobile wizard to the first offending
+    // one so its inline errors are on screen. Desktop shows every section, so the step change is a
+    // no-op there; the full error summary at the top of the form covers the desktop case.
+    onError: (error) => {
+      if (!(error instanceof ApiError) || !error.errors) return;
+      const errors = error.errors;
+      const firstBad = STEP_FIELDS.findIndex((fields) =>
+        fields.some((field) => {
+          const key = SERVER_KEY[field] ?? field;
+          return (
+            Boolean(errors[key]) ||
+            Object.keys(errors).some((name) => name.startsWith(`${key}.`))
+          );
+        }),
+      );
+      if (firstBad >= 0) {
+        setStep(firstBad);
+        headerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     },
   });
 
@@ -539,6 +576,55 @@ export function SellForm() {
     });
   }
 
+  /**
+   * Mobile wizard: validate ONLY the given step's fields (marking them touched so their inline
+   * errors show), without touching any other step's state. Returns whether the step is clear.
+   */
+  function validateStep(index: number): boolean {
+    const errors = computeErrors(currentValues());
+    const fields = STEP_FIELDS[index];
+
+    setTouched((previous) => {
+      const next = { ...previous };
+      fields.forEach((field) => {
+        next[field] = true;
+      });
+      return next;
+    });
+    setClientErrors((previous) => {
+      const next = { ...previous };
+      fields.forEach((field) => {
+        const message = errors[field];
+        if (message) next[field] = message;
+        else delete next[field];
+      });
+      return next;
+    });
+
+    return fields.every((field) => !errors[field]);
+  }
+
+  /** Return the viewport to the top of the current step (the progress strip) after a step change. */
+  function scrollToStepTop() {
+    headerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /** Mobile "Next": block until this step's required fields validate, then advance. */
+  function goNext() {
+    if (!validateStep(step)) {
+      scrollToStepTop();
+      return;
+    }
+    setStep((current) => Math.min(current + 1, STEPS.length - 1));
+    scrollToStepTop();
+  }
+
+  /** Mobile "Back": no validation — never trap the seller or lose what they typed. */
+  function goBack() {
+    setStep((current) => Math.max(current - 1, 0));
+    scrollToStepTop();
+  }
+
   // A blocked submit renders the summary in the same commit; focus it once it's in the DOM.
   useEffect(() => {
     if (summarySignal === 0) return;
@@ -572,6 +658,7 @@ export function SellForm() {
     setClientErrors({});
     setTouched({});
     setSummarySignal(0);
+    setStep(0);
     mutation.reset();
   }
 
@@ -642,7 +729,12 @@ export function SellForm() {
 
           if (Object.keys(errors).length > 0) {
             // Never call the API: send the seller to the summary rather than uploading 100 MB just
-            // to be rejected. Any stale 422 from an earlier attempt goes with it.
+            // to be rejected. Any stale 422 from an earlier attempt goes with it. On mobile, drop
+            // them onto the first step that still has a problem.
+            const firstBad = STEP_FIELDS.findIndex((fields) =>
+              fields.some((field) => errors[field]),
+            );
+            if (firstBad >= 0) setStep(firstBad);
             mutation.reset();
             setSummarySignal((signal) => signal + 1);
             return;
@@ -650,8 +742,45 @@ export function SellForm() {
 
           mutation.mutate();
         }}
-        className="overflow-hidden rounded-[10px] border border-border bg-canvas"
+        className="sell-form mb-24 overflow-hidden rounded-[10px] border border-border bg-canvas md:mb-0"
       >
+        {/* ── Mobile wizard progress strip (step counter + segmented bar). <768px only. ────────
+            Desktop keeps its sticky ProgressRail to the side; this never renders there (`md:hidden`).
+            The section's own numbered "01 The basics" header supplies the step title just below. */}
+        <div
+          ref={headerRef}
+          className="scroll-mt-2 flex flex-col gap-3 border-b border-border bg-canvas-subtle px-6 py-4 md:hidden"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="mono text-[11px] tracking-[0.12em] text-fg-muted uppercase">
+              Step <span className="text-accent">{String(step + 1).padStart(2, "0")}</span>
+              <span className="text-fg-muted/60"> / {String(STEPS.length).padStart(2, "0")}</span>
+              <span className="ml-2 font-semibold text-primary normal-case tracking-normal">
+                {STEPS[step].title}
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={clearForm}
+              className="flex-none text-[12px] font-medium text-fg-muted underline-offset-2 transition-colors hover:text-danger hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+
+          <div className="flex gap-1.5" aria-hidden>
+            {STEPS.map((section, index) => (
+              <span
+                key={section.id}
+                className={cn(
+                  "h-1.5 flex-1 rounded-full transition-colors",
+                  index <= step ? "bg-accent" : "bg-border",
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
         {generalError || summary.length > 0 ? (
           <div
             id="sell-errors"
@@ -671,7 +800,7 @@ export function SellForm() {
         <div
           id={STEPS[0].id}
           onFocusCapture={() => setActive(0)}
-          className="scroll-mt-24 p-6 sm:p-8 lg:p-10"
+          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 0 && "hidden md:block")}
         >
           <FormSection step={STEPS[0].step} title={STEPS[0].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
@@ -784,13 +913,13 @@ export function SellForm() {
           </FormSection>
         </div>
 
-        <div className="h-px bg-border" aria-hidden />
+        <div className="hidden h-px bg-border md:block" aria-hidden />
 
         {/* ── 02 financials ─────────────────────────────────────────────────── */}
         <div
           id={STEPS[1].id}
           onFocusCapture={() => setActive(1)}
-          className="scroll-mt-24 p-6 sm:p-8 lg:p-10"
+          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 1 && "hidden md:block")}
         >
           <FormSection step={STEPS[1].step} title={STEPS[1].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
@@ -886,13 +1015,13 @@ export function SellForm() {
           </FormSection>
         </div>
 
-        <div className="h-px bg-border" aria-hidden />
+        <div className="hidden h-px bg-border md:block" aria-hidden />
 
         {/* ── 03 the product ────────────────────────────────────────────────── */}
         <div
           id={STEPS[2].id}
           onFocusCapture={() => setActive(2)}
-          className="scroll-mt-24 p-6 sm:p-8 lg:p-10"
+          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 2 && "hidden md:block")}
         >
           <FormSection step={STEPS[2].step} title={STEPS[2].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-3">
@@ -978,13 +1107,13 @@ export function SellForm() {
           </FormSection>
         </div>
 
-        <div className="h-px bg-border" aria-hidden />
+        <div className="hidden h-px bg-border md:block" aria-hidden />
 
         {/* ── 04 files & verification ───────────────────────────────────────── */}
         <div
           id={STEPS[3].id}
           onFocusCapture={() => setActive(3)}
-          className="scroll-mt-24 p-6 sm:p-8 lg:p-10"
+          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 3 && "hidden md:block")}
         >
           <FormSection step={STEPS[3].step} title={STEPS[3].title}>
             <Alert variant="info" title="Your files stay private" className="mb-6">
@@ -1037,13 +1166,13 @@ export function SellForm() {
           </FormSection>
         </div>
 
-        <div className="h-px bg-border" aria-hidden />
+        <div className="hidden h-px bg-border md:block" aria-hidden />
 
         {/* ── 05 payout & confirm ───────────────────────────────────────────── */}
         <div
           id={STEPS[4].id}
           onFocusCapture={() => setActive(4)}
-          className="scroll-mt-24 p-6 sm:p-8 lg:p-10"
+          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 4 && "hidden md:block")}
         >
           <FormSection step={STEPS[4].step} title={STEPS[4].title}>
             <p className="mb-5 flex items-start gap-2.5 text-[13px] leading-[1.5] text-fg-muted">
@@ -1218,7 +1347,7 @@ export function SellForm() {
         {/* ── footer bar ────────────────────────────────────────────────────── */}
         {/* Action row: full-width, 44px-tall buttons stacked on phones; the design's justified row
             from sm up. */}
-        <div className="flex flex-col items-stretch gap-4 border-t border-border bg-canvas-subtle px-6 py-[22px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8 lg:px-10">
+        <div className="hidden flex-col items-stretch gap-4 border-t border-border bg-canvas-subtle px-6 py-[22px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8 md:flex lg:px-10">
           <span className="text-[13px] text-fg-muted">
             No account needed — our team replies by email.
           </span>
@@ -1235,6 +1364,36 @@ export function SellForm() {
             <Button type="submit" loading={mutation.isPending} className="w-full sm:w-auto">
               {mutation.isPending ? "Uploading…" : "Submit for review"}
             </Button>
+          </div>
+        </div>
+
+        {/* ── Mobile wizard nav — pinned to the viewport bottom, always reachable. <768px only. ──
+            `fixed` is deliberate: none of the /sell ancestors set a transform, so it anchors to the
+            viewport (not the overflow-hidden card), and the form's `mb-24` gives the last field room
+            to clear it. Buttons stay inside <form>, so "Submit listing" submits normally. */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm md:hidden">
+          <div className="mx-auto flex max-w-[540px] items-center gap-3">
+            {step > 0 ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={goBack}
+                disabled={mutation.isPending}
+                className="h-12 flex-1"
+              >
+                Back
+              </Button>
+            ) : null}
+
+            {step < STEPS.length - 1 ? (
+              <Button type="button" onClick={goNext} className="h-12 flex-[2]">
+                Next
+              </Button>
+            ) : (
+              <Button type="submit" loading={mutation.isPending} className="h-12 flex-[2]">
+                {mutation.isPending ? "Uploading…" : "Submit listing"}
+              </Button>
+            )}
           </div>
         </div>
       </form>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 
-import { formatCompactMoney, type FeaturedProduct } from "@/lib/catalog";
+import { formatCompactMoney, revenueMultiple, type FeaturedProduct } from "@/lib/catalog";
 
 /**
  * The designed featured-listing card, driven by REAL catalog data.
@@ -64,6 +64,8 @@ export function ListingCard({ product, index = 0 }: { product: FeaturedProduct; 
 
   const asking = formatCompactMoney(product.price_cents / 100, product.currency);
   const mrr = product.mrr !== null ? formatCompactMoney(product.mrr, product.currency) : null;
+  // Pay-vs-earn cue: asking as a multiple of MRR. `null` (and so omitted) when there's no MRR.
+  const multiple = revenueMultiple(product.price_cents, product.mrr);
 
   return (
     <Link
@@ -127,33 +129,29 @@ export function ListingCard({ product, index = 0 }: { product: FeaturedProduct; 
           {product.tagline}
         </p>
 
-        {/* `max-sm:flex-wrap`: with a large MRR + asking price the two figures wrap onto separate
-            lines on a phone rather than compressing into each other. */}
-        <div className="mt-[18px] flex items-baseline justify-between gap-3 border-t border-border pt-4 max-sm:flex-wrap">
-          {mrr ? (
-            <>
-              <div>
-                <div className="text-[11px] tracking-[0.06em] text-fg-muted uppercase">
-                  Monthly revenue
-                </div>
-                <div className="mono text-[26px] font-semibold tracking-[-0.02em] text-primary">
-                  {mrr}
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="mono text-sm text-primary">{asking}</div>
-                <div className="mt-0.5 text-[11px] text-fg-muted">asking</div>
-              </div>
-            </>
-          ) : (
-            /* No MRR published for this listing — show the asking price as the primary figure. */
+        {/* Pay-vs-earn hierarchy: the ASKING PRICE (what the buyer pays) is the dominant figure —
+            biggest, boldest, navy — and MRR (what the business earns) is a smaller, muted supporting
+            metric to its side. A mono "≈ N× monthly revenue" line ties the two together. */}
+        <div className="mt-[18px] border-t border-border pt-4">
+          {/* `max-sm:flex-wrap`: on a phone a large asking + MRR wrap onto separate lines rather
+              than compressing into each other. */}
+          <div className="flex items-end justify-between gap-3 max-sm:flex-wrap">
             <div>
               <div className="text-[11px] tracking-[0.06em] text-fg-muted uppercase">Price</div>
-              <div className="mono text-[26px] font-semibold tracking-[-0.02em] text-primary">
+              <div className="mono text-[26px] leading-none font-bold tracking-[-0.02em] text-primary">
                 {asking}
               </div>
             </div>
-          )}
+            {mrr ? (
+              <div className="text-right">
+                <div className="text-[11px] tracking-[0.06em] text-fg-muted uppercase">MRR /mo</div>
+                <div className="mono text-sm font-medium text-fg-muted">{mrr}</div>
+              </div>
+            ) : null}
+          </div>
+          {multiple ? (
+            <div className="mono mt-2 text-[11px] text-fg-muted">{multiple}</div>
+          ) : null}
         </div>
 
         {/* Always visible — never revealed on hover, so the card never reflows.

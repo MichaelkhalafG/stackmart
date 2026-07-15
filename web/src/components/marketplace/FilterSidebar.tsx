@@ -1,6 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { SlidersHorizontal } from "lucide-react";
+
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { Category } from "@/lib/catalog";
@@ -15,7 +16,7 @@ const ALL = "__all";
  * `GET /api/products` list item does not include `tech_stack`, so a curated list is the pragmatic
  * source of options; a selection that matches nothing simply yields the Blankslate.
  */
-const COMMON_STACKS = [
+export const COMMON_STACKS = [
   "Laravel",
   "Next.js",
   "React",
@@ -57,28 +58,34 @@ export function FilterSidebar({
   onClear: () => void;
 }) {
   return (
-    <aside className="flex flex-col gap-6 lg:sticky lg:top-20 lg:self-start">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-fg">Filters</h2>
-          <Badge variant="outline">
-            {resultCount === null ? "…" : `${resultCount} result${resultCount === 1 ? "" : "s"}`}
-          </Badge>
+    <aside className="overflow-hidden rounded-2xl border border-border bg-canvas shadow-sm max-md:hidden lg:sticky lg:top-20 lg:self-start">
+      {/* Branded navy coding-motif header — matches the mobile filters drawer. */}
+      <div className="mesh-hero-visual relative overflow-hidden">
+        <div className="grid-motif-hero absolute inset-0" aria-hidden />
+        <div className="relative flex items-center justify-between gap-2 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="size-4 text-canvas" aria-hidden />
+            <h2 className="text-sm font-semibold text-primary-foreground">Filters</h2>
+            <span className="mono rounded-full bg-canvas/15 px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+              {resultCount === null ? "…" : resultCount}
+            </span>
+          </div>
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-xs font-semibold text-primary-foreground/85 hover:text-primary-foreground"
+            >
+              Clear
+            </button>
+          ) : null}
         </div>
-        {hasActiveFilters ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-xs font-medium text-accent hover:underline"
-          >
-            Clear
-          </button>
-        ) : null}
       </div>
 
+      <div className="flex flex-col gap-6 p-5">
       {/* Category */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        <span className="border-l-2 border-accent/60 pl-2 text-xs font-semibold tracking-wide text-fg-muted uppercase">
           Category
         </span>
         <RadioGroup
@@ -100,7 +107,7 @@ export function FilterSidebar({
 
       {/* Tech stack */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        <span className="border-l-2 border-accent/60 pl-2 text-xs font-semibold tracking-wide text-fg-muted uppercase">
           Tech stack
         </span>
         <RadioGroup
@@ -122,8 +129,9 @@ export function FilterSidebar({
 
       {/* Price */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Price</span>
+        <span className="border-l-2 border-accent/60 pl-2 text-xs font-semibold tracking-wide text-fg-muted uppercase">Price</span>
         <PriceRange minCents={minCents} maxCents={maxCents} onCommit={onPrice} />
+      </div>
       </div>
     </aside>
   );

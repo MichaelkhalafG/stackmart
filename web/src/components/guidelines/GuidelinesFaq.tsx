@@ -120,7 +120,7 @@ function FaqGroup({ id, title, items }: { id: string; title: string; items: Faq[
 
 export function GuidelinesFaq() {
   return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-7">
+    <div className="grid gap-6 md:gap-8 lg:grid-cols-2 lg:gap-7">
       <FaqGroup id="buyers" title="For buyers" items={BUYER_FAQ} />
       <FaqGroup id="sellers" title="For sellers" items={SELLER_FAQ} />
     </div>

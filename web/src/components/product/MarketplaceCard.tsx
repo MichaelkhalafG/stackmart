@@ -44,7 +44,9 @@ export function MarketplaceCard({ product }: { product: ProductListItem }) {
   // Always renderable: a real image, else the single shared default (never an empty/coloured tile).
   const cover = productImageOrDefault(product.cover_image);
   return (
-    <Card className="group/mkt-card gap-0 p-0 transition-colors hover:ring-foreground/20">
+    // Tasteful depth: a soft resting shadow that deepens to a navy-tinted float on hover, with the
+    // border warming to navy. Elevation only (no transform) — zero layout shift, per the card rule.
+    <Card className="group/mkt-card gap-0 overflow-hidden p-0 shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-float-md">
       <Link
         href={`/listing/${product.slug}`}
         className="flex h-full flex-col rounded-[inherit] focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -79,9 +81,14 @@ export function MarketplaceCard({ product }: { product: ProductListItem }) {
             {product.title}
           </h3>
           <p className="line-clamp-2 flex-1 text-sm text-fg-muted">{product.tagline}</p>
-          <p className="mono text-sm font-semibold text-fg">
-            {formatPrice(product.price_cents, product.currency)}
-          </p>
+          {/* Asking price = the dominant figure (what the buyer pays): labelled, navy, bold.
+              The list contract carries no MRR, so no earn-metric competes with it here. */}
+          <div className="mt-0.5">
+            <div className="text-[11px] tracking-[0.06em] text-fg-muted uppercase">Price</div>
+            <div className="mono text-lg font-bold text-primary">
+              {formatPrice(product.price_cents, product.currency)}
+            </div>
+          </div>
         </div>
       </Link>
     </Card>

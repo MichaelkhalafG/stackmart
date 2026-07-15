@@ -233,6 +233,16 @@
   from { transform: translateX(100%); }
   to { transform: translateX(0); }
 }
+/* Hero card shuffle: the newly-fronted card regrows its chart bars and sweeps a soft glow. */
+@keyframes hero-bar-rise {
+  from { transform: scaleY(0.12); }
+  to { transform: scaleY(1); }
+}
+@keyframes hero-glow-pulse {
+  0% { opacity: 0; }
+  22% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
 
 @layer components {
   /* Animations (design spec timings). */
@@ -244,6 +254,47 @@
   .anim-spin-ring { animation: sm-spin 1.4s linear infinite; }
   .anim-fade { animation: sm-fade 0.16s ease; }
   .anim-slide-in { animation: sm-slide-in 0.22s ease; }
+
+  /* Hero card shuffle — each card transitions between fixed 3D "slot" poses. transform/opacity/
+     filter ONLY, so the whole shuffle composites on the GPU with no layout work. The overshooting
+     cubic-bezier gives the dealt-card settle; opacity resolves faster than the move to mask the
+     z-index re-order as a card recedes; blur eases on its own curve. Per-card stagger is set inline. */
+  .hero-shuffle-card {
+    transition:
+      transform 1000ms cubic-bezier(0.32, 1.28, 0.42, 1),
+      opacity 640ms cubic-bezier(0.4, 0, 0.2, 1),
+      filter 860ms ease-out;
+    will-change: transform, opacity, filter;
+  }
+  .hero-motif {
+    transition: transform 1400ms ease;
+    will-change: transform;
+  }
+  .hero-bar { transform-origin: bottom; }
+  .hero-glow {
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background: radial-gradient(
+      120% 100% at 50% 0%,
+      color-mix(in srgb, var(--accent) 38%, transparent),
+      transparent 70%
+    );
+  }
+  .hero-shuffle-card[data-front="true"] .hero-glow {
+    animation: hero-glow-pulse 1100ms ease-out;
+  }
+  .hero-shuffle-card[data-front="true"] .hero-bar {
+    animation: hero-bar-rise 700ms cubic-bezier(0.32, 1.28, 0.42, 1) both;
+  }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(1) { animation-delay: 120ms; }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(2) { animation-delay: 175ms; }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(3) { animation-delay: 230ms; }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(4) { animation-delay: 285ms; }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(5) { animation-delay: 340ms; }
+  .hero-shuffle-card[data-front="true"] .hero-bar:nth-child(6) { animation-delay: 395ms; }
 
   /* Hero: lavender halo behind the copy column. */
   .mesh-hero {
@@ -278,6 +329,37 @@
       radial-gradient(50% 70% at 95% 5%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%),
       radial-gradient(45% 65% at 5% 40%, color-mix(in srgb, var(--tag-bg) 50%, transparent), transparent 62%),
       radial-gradient(60% 80% at 70% 110%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+  }
+
+  /* Marketplace PAGE backdrop — a full-page branded wash that lives BEHIND the content (the cards,
+     sidebar, drawer, empty/loading states are all opaque or transparent, so this only ever shows in
+     the gutters, gaps and edges, never under card text). A soft navy/royal gradient mesh biased to
+     the top + a faint lavender bloom top and bottom, over a very low-ink technical grid that gives
+     the whole page a consistent "coding surface" texture. All token-derived; static (no motion). */
+  .mkt-backdrop {
+    background-color: transparent;
+    background-image:
+      radial-gradient(42% 26% at 0% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 60%),
+      radial-gradient(48% 28% at 100% 0%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 60%),
+      radial-gradient(95% 20% at 50% 0%, color-mix(in srgb, var(--tag-bg) 42%, transparent), transparent 72%),
+      radial-gradient(90% 16% at 50% 100%, color-mix(in srgb, var(--tag-bg) 24%, transparent), transparent 75%),
+      linear-gradient(color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px);
+    background-size: auto, auto, auto, auto, 34px 34px, 34px 34px;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat;
+    background-position: 0 0;
+  }
+
+  /* Marketplace header: a faint navy technical grid on the light surface, masked so it lives in the
+     top-right and fades to nothing behind the heading. Light-surface companion to .grid-motif-hero
+     (which is white-on-navy for the dark panels). Token-derived, ~7% ink — texture, never noise. */
+  .mkt-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px);
+    background-size: 30px 30px;
+    -webkit-mask-image: radial-gradient(115% 130% at 100% 0%, black, transparent 68%);
+    mask-image: radial-gradient(115% 130% at 100% 0%, black, transparent 68%);
   }
 
   /* Hero headline gradient — royal blue → violet tint, clipped to the glyphs.
@@ -411,6 +493,19 @@
       linear-gradient(color-mix(in srgb, var(--primary) 8%, transparent) 1px, transparent 1px),
       linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  /* Mobile Sell wizard: guarantee ≥44px tap targets for every text control, WITHOUT altering the
+     shared control tokens — so the desktop form is byte-for-byte unchanged. Gated at <768px (below
+     `md`) and scoped to `.sell-form`, this can never reach desktop or any other form. Checkboxes,
+     radios and the file inputs are visually-hidden and opt out. */
+  @media (max-width: 767px) {
+    .sell-form
+      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .sell-form select,
+    .sell-form textarea {
+      min-height: 44px;
+    }
   }
 
   /* ── Auth screens: the LIGHT form panel ────────────────────────────────────
@@ -566,6 +661,13 @@
     animation: none;
   }
   .category-tile:hover { transform: none; }
+
+  /* Hero shuffle: keep the composition, drop the motion. With the active index frozen at 0 the deck
+     is a clean static layered stack; disabling the transitions/keyframes guarantees zero movement. */
+  .hero-shuffle-card { transition: none; }
+  .hero-motif { transition: none; }
+  .hero-shuffle-card[data-front="true"] .hero-bar,
+  .hero-shuffle-card[data-front="true"] .hero-glow { animation: none; }
 }
 
 @layer components {

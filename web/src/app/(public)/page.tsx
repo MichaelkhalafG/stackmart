@@ -51,8 +51,8 @@ export const revalidate = 300;
 /** The design's featured grid is a row of three. */
 const FEATURED_LIMIT = 3;
 
-/** The hero cluster is three cards: the priciest listing up front, two behind it. */
-const HERO_LIMIT = 3;
+/** The hero shuffle cycles through the top listings — deal from the priciest six for variety. */
+const HERO_LIMIT = 6;
 
 export default async function HomePage() {
   const [featured, categories, topPriced] = await Promise.all([
