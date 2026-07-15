@@ -34,10 +34,14 @@ class OrderDelivered extends Mailable
 
     public function content(): Content
     {
+        $frontend = rtrim((string) config('payments.frontend_url'), '/');
+
         return new Content(
             markdown: 'mail.order-delivered',
             with: [
-                'purchasesUrl' => rtrim((string) config('payments.frontend_url'), '/').'/account/purchases',
+                // The license-gated download page for THIS order — the buyer enters the key below.
+                'downloadUrl' => $frontend.'/download/'.$this->order->id,
+                'purchasesUrl' => $frontend.'/account/purchases',
             ],
         );
     }

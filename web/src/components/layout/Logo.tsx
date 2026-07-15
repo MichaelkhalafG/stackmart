@@ -17,20 +17,29 @@ import { cn } from "@/lib/utils";
 export function Logo({
   variant = "navy",
   size = "header",
+  asLink = true,
   className,
 }: {
   variant?: "navy" | "light";
   size?: "header" | "footer";
+  /**
+   * Render the lockup as a link home (default — header/footer). Set `false` where navigating away
+   * would destroy the user's context, e.g. the purchase `AuthModal`: there the lockup is pure
+   * branding and must NOT be a link, or clicking it would abandon the checkout mid-flow.
+   */
+  asLink?: boolean;
   className?: string;
 }) {
   const light = variant === "light";
 
-  return (
-    <Link
-      href="/"
-      aria-label="MDN STACKMART home"
-      className={cn("flex flex-none items-center", size === "footer" ? "gap-3" : "gap-[11px]", className)}
-    >
+  const lockupClassName = cn(
+    "flex flex-none items-center",
+    size === "footer" ? "gap-3" : "gap-[11px]",
+    className,
+  );
+
+  const lockup = (
+    <>
       <Image
         src="/logo-mdn.png"
         alt="MDN"
@@ -56,6 +65,22 @@ export function Logo({
       >
         STACKMART
       </span>
+    </>
+  );
+
+  // Non-link mode: the lockup is pure branding (used inside the purchase modal, where a link home
+  // would abandon the checkout). It stays announced as an image with its accessible name.
+  if (!asLink) {
+    return (
+      <span role="img" aria-label="MDN STACKMART" className={lockupClassName}>
+        {lockup}
+      </span>
+    );
+  }
+
+  return (
+    <Link href="/" aria-label="MDN STACKMART home" className={lockupClassName}>
+      {lockup}
     </Link>
   );
 }

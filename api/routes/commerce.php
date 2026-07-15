@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\Route;
 |   POST /checkout                 Bearer  { product_id } → { url }  (via PaymentProvider::createCheckout)  [S4.01]
 |   GET  /orders                   Bearer  buyer's own orders
 |   GET  /orders/{id}              Bearer  by id OR provider_reference; owner only
-|   GET  /orders/{id}/download     Bearer  owner + paid; streams ZIP; increments download_count             [S4.04]
+|   POST /orders/{id}/download     Bearer  owner + paid + LICENSE KEY; streams ZIP; increments count        [S4.04]
+|                                          ⚠ CONTRACT CHANGE (was GET, no key) — see the report/DR.
 |   POST /webhooks/payment         none    provider-verified → PaymentEvent → FulfillOrder (idempotent)     [S4.02]
 |
 | Provider stays behind the PaymentProvider contract (app/Payments, S1.07) — never name a
@@ -34,9 +35,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Single order by numeric id OR provider_reference; owner-only (else 403).
     Route::get('/orders/{order}', [OrderController::class, 'show']);
 
-    // S4.04 — authenticated deliverable download (owner + paid; streams the private ZIP;
-    // increments download_count). Distinct 3-segment path — does not collide with /orders/{order}.
-    Route::get('/orders/{order}/download', [DownloadController::class, 'show']);
+    // S4.04 — LICENSE-GATED deliverable download (owner + paid + matching license key; streams the
+    // private ZIP; increments download_count only on full success).
+    //
+    // POST, not GET, and deliberately NO GET variant: a GET route here would be a bypass of the
+    // license gate, and it would put the key in a URL (access logs, history, Referer). Throttled so
+    // the license key cannot be brute-forced.
+    Route::post('/orders/{order}/download', [DownloadController::class, 'store'])
+        ->middleware('throttle:10,1');
 });
 
 // S4.02 — provider webhook. NO user auth (provider-verified inside PaymentProvider::handleWebhook);

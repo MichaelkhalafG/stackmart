@@ -158,6 +158,13 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+
+    /* Safety net, NOT a fix: a single fixed-width mistake anywhere used to turn into a page-wide
+       sideways scroll on phones (there was no guard at all). `clip` contains it without creating a
+       scroll container — unlike `hidden`, it does not break `position: sticky` on descendants
+       (the marketplace filter rail, the sell progress rail, the sticky header all rely on it).
+       Real overflow bugs must still be fixed at the source. */
+    overflow-x: clip;
   }
   a {
     color: var(--accent);
@@ -202,6 +209,12 @@
 @keyframes sm-drift {
   from { transform: translateY(0); }
   to { transform: translateY(-38px); }
+}
+/* Checkout success — the confirmation mark pops in once, then settles. */
+@keyframes sm-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }
 /* Forms & utility reference: toast entry + skeleton shimmer bar. */
 @keyframes sm-toast {
@@ -344,6 +357,107 @@
 
   .anim-toast { animation: sm-toast 0.28s ease; }
   .anim-shimmer { animation: sm-bar 1.3s ease-in-out infinite; }
+  /* One-shot celebratory pop on the checkout success mark. */
+  .anim-pop { animation: sm-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+  /* ── /sell page backdrop ───────────────────────────────────────────────────
+     Same coding language as the landing's "How it works", tuned for a FORM page.
+
+     READABILITY IS THE CONSTRAINT: `.sell-backdrop`'s horizontal mask keeps the motif in the OUTER
+     margins and fades it to nothing across the whole central column, so no code/grid ever sits
+     under the heading, the form card or its labels. The form itself is on an opaque `bg-canvas`
+     card regardless, so text contrast is untouched either way. On narrow screens the mask leaves
+     only a few px at each edge — effectively no motif under content. */
+  .sell-base {
+    background-color: var(--canvas);
+    background-image:
+      radial-gradient(
+        90% 55% at 50% -10%,
+        color-mix(in srgb, var(--tag-bg) 45%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        50% 50% at 100% 100%,
+        color-mix(in srgb, var(--accent) 4%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(180deg, var(--canvas), var(--canvas-subtle));
+  }
+
+  /* Keeps the motif OUT of the central content column (both edges only). */
+  .sell-backdrop {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      black 0%,
+      black 6%,
+      transparent 18%,
+      transparent 82%,
+      black 94%,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      black 0%,
+      black 6%,
+      transparent 18%,
+      transparent 82%,
+      black 94%,
+      black 100%
+    );
+  }
+
+  .sell-grid {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--primary) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* ── Auth screens: the LIGHT form panel ────────────────────────────────────
+     The left half of the full-viewport auth split. A soft lavender/royal gradient mesh plus a faint
+     navy dot grid, so the form side reads as branded rather than a blank white void.
+
+     READABILITY: `.auth-grid`'s radial mask clears the pattern out of the centre — and the form
+     itself sits on an opaque `bg-canvas` card above it — so labels, inputs and errors keep full
+     contrast. Nothing renders under the text. */
+  .auth-base {
+    background-color: var(--canvas);
+    background-image:
+      /* TOP LAYER — a soft canvas "clearing" behind the centred form. The form now sits directly on
+         this panel (no white card), and the lavender tint alone dropped small text below AA
+         (helper 4.47:1, error 4.04:1). This washes the centre back to canvas so labels, helper text
+         and inline errors read at their full on-white contrast, while the brand tint and the dot
+         grid still carry the edges. */
+      radial-gradient(
+        58% 48% at 50% 50%,
+        var(--canvas) 0%,
+        color-mix(in srgb, var(--canvas) 88%, transparent) 46%,
+        transparent 74%
+      ),
+      radial-gradient(
+        75% 55% at 0% 0%,
+        color-mix(in srgb, var(--tag-bg) 55%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        60% 50% at 100% 100%,
+        color-mix(in srgb, var(--accent) 6%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(180deg, var(--canvas), var(--canvas-subtle));
+  }
+
+  .auth-grid {
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--primary) 9%, transparent) 1px,
+      transparent 1.5px
+    );
+    background-size: 22px 22px;
+    /* Fade the dots out behind the centred form card. */
+    -webkit-mask-image: radial-gradient(62% 52% at 50% 50%, transparent 22%, black 80%);
+    mask-image: radial-gradient(62% 52% at 50% 50%, transparent 22%, black 80%);
+  }
 
   /* The branded navy panel behind the auth split view, the 404 and the loading motif:
      deep navy + royal-blue gradient mesh. */
@@ -447,7 +561,8 @@
   .anim-drift-slow,
   .anim-drift-slower,
   .anim-toast,
-  .anim-shimmer {
+  .anim-shimmer,
+  .anim-pop {
     animation: none;
   }
   .category-tile:hover { transform: none; }

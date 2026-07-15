@@ -10,7 +10,6 @@ import {
   KeyRound,
   Search,
   ShieldCheck,
-  Sparkles,
   TrendingUp,
   Upload,
 } from "lucide-react";
@@ -19,7 +18,7 @@ import { GuidelinesFaq } from "@/components/guidelines/GuidelinesFaq";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 const GUIDELINES_DESCRIPTION =
-  "How MDN STACKMART works — how buyers browse vetted listings, buy securely, and receive a license key plus the deliverable ZIP, and how sellers submit, choose a plan, get reviewed, and get paid. Plus a full buyer and seller FAQ.";
+  "How MDN STACKMART works — how buyers browse vetted listings, buy securely, and receive a license key plus the deliverable ZIP, and how sellers submit, get reviewed, go live, and get paid on a flat 20% commission. Plus a full buyer and seller FAQ.";
 
 export const metadata: Metadata = {
   title: "Guidelines",
@@ -91,67 +90,40 @@ const SELLER_STEPS = [
     icon: Upload,
     step: "01",
     title: "Submit your project",
-    body: "Through the form at /sell — no account needed. Attach your code ZIP and product images, and include a README that explains how we can verify your claims, plus your tech stack, metrics, category, and description.",
-  },
-  {
-    icon: Sparkles,
-    step: "02",
-    title: "Choose your plan",
-    body: "Basic or Premium. The difference is commission versus reach — Premium costs 10 points more and puts your listing in the home Featured section with a Recommended mark.",
-  },
-  {
-    icon: Banknote,
-    step: "03",
-    title: "Give us your payout details",
-    body: "How you want to be paid, supplied with your submission. This is where your money lands once the product sells.",
+    body: "Through the form at /sell — no account needed. Attach the deliverable code ZIP, product images, and a README that explains how we can verify your claims, plus your tech stack, business metrics, category, description, and your payout details.",
   },
   {
     icon: BadgeCheck,
-    step: "04",
-    title: "We review & approve",
-    body: "An admin reads the code, follows your README to verify what you claimed, checks the demo, and sanity-checks the metrics. We approve, come back with questions, or decline.",
+    step: "02",
+    title: "We review & verify",
+    body: "An admin reads the code, follows your README to reproduce what you claimed, opens the demo, and sanity-checks the metrics. We approve, come back with questions, or decline.",
   },
   {
     icon: FileArchive,
-    step: "05",
+    step: "03",
     title: "You go live",
-    body: "Approved projects are published as listings by our team. There is no listing fee — the commission on a sale is the only cut we take.",
+    body: "Approved projects are published as listings by our team. There is no listing fee and no charge for being reviewed — the commission on a sale is the only cut we take.",
   },
   {
-    icon: ShieldCheck,
-    step: "06",
+    icon: CreditCard,
+    step: "04",
+    title: "It sells",
+    body: "A buyer completes checkout for your listing. Their payment is confirmed, and they immediately receive the deliverable ZIP and a license key.",
+  },
+  {
+    icon: Banknote,
+    step: "05",
     title: "You get paid",
-    body: "After the sale clears, we transfer your payout — the sale price minus your plan's commission — to your payout details, and email you proof of the transfer.",
+    body: "MDN STACKMART takes a flat 20% commission and transfers the remaining 80% to the payout details you supplied — then emails you proof of the transfer for your records.",
   },
 ];
 
-const PLANS = [
-  {
-    name: "Basic",
-    rate: "20%",
-    rateNote: "commission per sale",
-    take: "You keep 80%",
-    featured: false,
-    perks: [
-      "Listed in the marketplace",
-      "Full admin vetting & verification",
-      "No listing fee, no review fee",
-      "Payout on sale + proof of transfer",
-    ],
-  },
-  {
-    name: "Premium",
-    rate: "30%",
-    rateNote: "commission per sale",
-    take: "You keep 70%",
-    featured: true,
-    perks: [
-      "Everything in Basic",
-      "Shown in the home page Featured section",
-      "Marked as Recommended on your listing",
-      "Priority placement in front of every visitor",
-    ],
-  },
+/** The single, flat commission — one rate for every seller. No plans, no tiers. */
+const COMMISSION_POINTS = [
+  "The same flat 20% for every seller — no plans, no tiers, no upsell",
+  "No listing fee and no review fee, whether or not you are approved",
+  "Paid out after the sale clears, to the details you supplied at submission",
+  "Proof of transfer emailed to you for your records",
 ];
 
 /** The mono code whisper behind the FAQ band — decorative only, static (no hydration risk). */
@@ -164,19 +136,16 @@ const FAQ_SNIPPET = [
   "  ✓ status .................. approved",
 ];
 
-function StepCard({
-  icon: Icon,
-  step,
-  title,
-  body,
-}: {
-  icon: typeof Search;
-  step: string;
-  title: string;
-  body: string;
-}) {
+type Step = { icon: typeof Search; step: string; title: string; body: string };
+
+/**
+ * One step card. `h-full` + a flex column so every card in a row is exactly the same height
+ * regardless of how long its copy is, and the hover lift matches the landing's card quality
+ * (border firms to navy + a soft navy shadow — no transform, so nothing shifts).
+ */
+function StepCard({ icon: Icon, step, title, body }: Step) {
   return (
-    <div className="rounded-[10px] border border-border bg-canvas p-[26px]">
+    <div className="category-tile flex h-full flex-col rounded-[10px] border border-border bg-canvas p-[26px]">
       <div className="flex items-center justify-between">
         <div className="flex size-[46px] items-center justify-center rounded-lg bg-tag-bg">
           <Icon className="size-[21px] text-accent" strokeWidth={2} aria-hidden />
@@ -189,45 +158,82 @@ function StepCard({
   );
 }
 
+/**
+ * The step grid.
+ *
+ * An `auto-fit` grid left ragged, half-empty trailing rows (5 steps never divide evenly into
+ * 3 or 4 columns). This lays the 5 steps out on a 6-column track so BOTH rows are completely
+ * full and the block reads as deliberate: 3 cards of `col-span-2`, then 2 cards of `col-span-3`.
+ * At `sm` it drops to two columns with the odd trailing card spanning the full width, so there is
+ * never a lone card next to a gap.
+ */
+function StepGrid({ steps }: { steps: Step[] }) {
+  const total = steps.length;
+
+  return (
+    <div className="mt-12 grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-6">
+      {steps.map((step, index) => {
+        const lgSpan =
+          total === 5 ? (index < 3 ? "lg:col-span-2" : "lg:col-span-3") : "lg:col-span-2";
+        const smSpan = total % 2 === 1 && index === total - 1 ? "sm:col-span-2" : "";
+
+        return (
+          <div key={step.step} className={`${lgSpan} ${smSpan}`}>
+            <StepCard {...step} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function GuidelinesPage() {
   return (
     <>
-      {/* ── Intro ─────────────────────────────────────────────────────────────── */}
-      <section className="mesh-hero relative overflow-hidden border-b border-border">
-        <div className="container-page py-[clamp(56px,7vw,96px)]">
+      {/* ── Header — the branded dark navy band (same treatment as the landing's dark sections:
+             `.mesh-sell` navy + royal-blue gradient mesh, with the `.grid-motif-sell` striped
+             coding grid on top). Only the header is dark; every section below stays light. ── */}
+      <section className="mesh-sell relative overflow-hidden">
+        <div className="grid-motif-sell absolute inset-0" aria-hidden />
+
+        <div className="relative container-page py-[clamp(64px,8vw,104px)]">
           <div className="max-w-[760px]">
-            <p className="mono text-[12px] font-semibold tracking-[0.12em] text-accent uppercase">
+            <p className="mono text-[12px] font-semibold tracking-[0.12em] text-tag-bg uppercase">
               Guidelines
             </p>
 
-            <h1 className="mt-3.5 text-[clamp(2.2rem,4.4vw,3.4rem)] leading-[1.06] font-bold tracking-[-0.03em] text-primary">
-              How MDN STACKMART{" "}
-              <span className="text-gradient-accent">actually works.</span>
+            <h1 className="mt-3.5 text-[clamp(2.2rem,4.4vw,3.4rem)] leading-[1.06] font-bold tracking-[-0.03em] text-canvas">
+              How MDN STACKMART <span className="text-tag-bg">actually works.</span>
             </h1>
 
-            <p className="mt-6 max-w-[640px] text-[clamp(1.05rem,1.5vw,1.2rem)] leading-[1.6] text-fg-muted">
+            <p className="mt-6 max-w-[640px] text-[clamp(1.05rem,1.5vw,1.2rem)] leading-[1.6] text-canvas/75">
               MDN STACKMART is a curated marketplace for buying and selling profitable micro-SaaS —
               ready-made products, web apps, and codebases. Every listing is vetted by our team
               before it goes live, and every sale delivers the real thing: the full source code plus
               a license key. This page is the whole process, end to end, for both sides of it.
             </p>
 
+            <div className="mono mt-7 inline-flex items-center gap-2.5 rounded-md border border-tag-bg/25 bg-tag-bg/10 px-3.5 py-2 text-[12.5px] text-tag-bg">
+              <span className="anim-pulse-dot size-1.5 rounded-full bg-tag-bg" aria-hidden />
+              flat 20% commission · no listing fee
+            </div>
+
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
                 href="#for-buyers"
-                className="shadow-cta-hover rounded-md border border-primary bg-primary px-[22px] py-3 text-[15px] font-semibold text-primary-foreground transition-[background-color,box-shadow] duration-200 hover:bg-primary-emphasis focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="shadow-cta-light rounded-md border border-canvas bg-canvas px-[22px] py-3 text-[15px] font-semibold text-primary-emphasis transition-[background-color,box-shadow] duration-200 hover:bg-tag-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
               >
                 For buyers
               </Link>
               <Link
                 href="#for-sellers"
-                className="rounded-md border border-border bg-canvas px-[22px] py-3 text-[15px] font-semibold text-primary transition-colors duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="rounded-md border border-canvas/35 bg-transparent px-[22px] py-3 text-[15px] font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
               >
                 For sellers
               </Link>
               <Link
                 href="#faq"
-                className="rounded-md border border-border bg-canvas px-[22px] py-3 text-[15px] font-semibold text-primary transition-colors duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="rounded-md border border-canvas/35 bg-transparent px-[22px] py-3 text-[15px] font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
               >
                 Read the FAQ
               </Link>
@@ -252,11 +258,7 @@ export default function GuidelinesPage() {
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-[repeat(auto-fit,minmax(258px,1fr))] gap-5">
-            {BUYER_STEPS.map((step) => (
-              <StepCard key={step.step} {...step} />
-            ))}
-          </div>
+          <StepGrid steps={BUYER_STEPS} />
 
           {/* License & verification explainer */}
           <div className="panel-navy relative mt-8 overflow-hidden rounded-[14px] p-[clamp(28px,4vw,44px)]">
@@ -309,77 +311,77 @@ export default function GuidelinesPage() {
               Submit once. We handle the rest.
             </h2>
             <p className="mt-4 text-[17px] leading-[1.6] text-fg-muted">
-              You don&rsquo;t need an account to sell here. Submit through the form, pick a plan, and
-              our team takes it from review to listing to payout — everything after your submission
-              happens by email.
+              You don&rsquo;t need an account to sell here. Submit through the form and our team
+              takes it from review to listing to payout — everything after your submission happens
+              by email.
             </p>
           </div>
 
-          <div className="mt-12 grid grid-cols-[repeat(auto-fit,minmax(258px,1fr))] gap-5">
-            {SELLER_STEPS.map((step) => (
-              <StepCard key={step.step} {...step} />
-            ))}
-          </div>
+          <StepGrid steps={SELLER_STEPS} />
 
-          {/* Plans */}
-          <div className="mt-14">
-            <h3 className="text-[1.5rem] font-bold tracking-[-0.02em] text-primary">
-              Choose your plan
-            </h3>
-            <p className="mt-2 max-w-[62ch] text-[15px] leading-[1.6] text-fg-muted">
-              Both plans get the same vetting and the same payout mechanics. The only trade is
-              commission against visibility.
-            </p>
-
-            <div className="mt-7 grid gap-5 lg:grid-cols-2">
-              {PLANS.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={
-                    plan.featured
-                      ? "shadow-float-md relative overflow-hidden rounded-[14px] border-2 border-primary bg-canvas p-[clamp(26px,3vw,34px)]"
-                      : "relative overflow-hidden rounded-[14px] border border-border bg-canvas p-[clamp(26px,3vw,34px)]"
-                  }
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-[1.35rem] font-bold text-primary">{plan.name}</span>
-                    {plan.featured ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground uppercase">
-                        <Sparkles className="size-3" strokeWidth={2.6} aria-hidden />
-                        Featured + Recommended
-                      </span>
-                    ) : null}
-                  </div>
-
-                  <div className="mt-6 flex items-baseline gap-2.5">
-                    <span className="mono text-[clamp(2.6rem,5vw,3.4rem)] leading-none font-bold tracking-[-0.03em] text-accent">
-                      {plan.rate}
-                    </span>
-                    <span className="text-[15px] text-fg-muted">{plan.rateNote}</span>
-                  </div>
-                  <p className="mono mt-3 text-[14px] font-semibold text-primary">{plan.take}</p>
-
-                  <ul className="mt-7 flex flex-col gap-3 border-t border-border pt-6">
-                    {plan.perks.map((perk) => (
-                      <li key={perk} className="flex items-start gap-2.5 text-[15px] text-fg">
-                        <Check
-                          className="mt-0.5 size-[17px] flex-none text-accent"
-                          strokeWidth={2.8}
-                          aria-hidden
-                        />
-                        {perk}
-                      </li>
-                    ))}
-                  </ul>
+          {/* Commission — one flat rate for everyone */}
+          <div className="mt-14 overflow-hidden rounded-[14px] border border-border bg-canvas">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+              {/* The rate */}
+              <div className="border-b border-border p-[clamp(28px,3.5vw,40px)] lg:border-r lg:border-b-0">
+                <div className="text-[13px] font-semibold tracking-[0.08em] text-accent uppercase">
+                  Commission
                 </div>
-              ))}
-            </div>
+                <h3 className="mt-2.5 text-[1.5rem] font-bold tracking-[-0.02em] text-primary">
+                  One flat rate. That&rsquo;s the whole pricing page.
+                </h3>
 
-            <p className="mt-6 text-[14px] leading-[1.6] text-fg-muted">
-              After a sale, MDN STACKMART transfers your payout — the sale price minus your
-              plan&rsquo;s commission — to the payout details you supplied, and emails you proof of
-              the transfer.
-            </p>
+                <div className="mt-7 flex items-baseline gap-3">
+                  <span className="mono text-[clamp(3rem,6vw,4rem)] leading-none font-bold tracking-[-0.03em] text-accent">
+                    20%
+                  </span>
+                  <span className="text-[15px] text-fg-muted">commission per sale</span>
+                </div>
+
+                {/* 80 / 20 split */}
+                <div
+                  className="mt-8 flex h-2.5 overflow-hidden rounded-full bg-canvas-subtle"
+                  aria-hidden
+                >
+                  <span className="h-full w-[80%] bg-primary" />
+                  <span className="h-full w-[20%] bg-accent" />
+                </div>
+                <div className="mono mt-3 flex items-center justify-between text-[12.5px]">
+                  <span className="flex items-center gap-2 text-primary">
+                    <span className="size-2 rounded-full bg-primary" aria-hidden />
+                    80% to you
+                  </span>
+                  <span className="flex items-center gap-2 text-accent">
+                    <span className="size-2 rounded-full bg-accent" aria-hidden />
+                    20% platform
+                  </span>
+                </div>
+              </div>
+
+              {/* What that includes */}
+              <div className="bg-canvas-subtle p-[clamp(28px,3.5vw,40px)]">
+                <ul className="flex flex-col gap-4">
+                  {COMMISSION_POINTS.map((point) => (
+                    <li key={point} className="flex items-start gap-3 text-[15px] leading-[1.55] text-fg">
+                      <span
+                        className="mt-0.5 flex size-[18px] flex-none items-center justify-center rounded-full bg-tag-bg"
+                        aria-hidden
+                      >
+                        <Check className="size-3 text-accent" strokeWidth={3} />
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-7 border-t border-border pt-6 text-[14px] leading-[1.6] text-fg-muted">
+                  On a $10,000 sale: MDN STACKMART keeps{" "}
+                  <span className="mono text-primary">$2,000</span> and transfers{" "}
+                  <span className="mono text-primary">$8,000</span> to you, with proof of the
+                  transfer emailed to you.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

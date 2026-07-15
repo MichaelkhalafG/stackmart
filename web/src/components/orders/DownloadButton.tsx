@@ -1,74 +1,39 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import { Download } from "lucide-react";
 
-import { apiUrl } from "@/lib/apiBase";
-import { useAuthStore } from "@/store/auth";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /**
- * Download a purchased product's deliverable (S4.05/S4.06). The download endpoint
- * (`GET /api/orders/{id}/download`) requires a Sanctum Bearer token, which a plain anchor
- * cannot send — so this fetches the ZIP WITH the `Authorization` header and triggers a
- * client-side download from the blob. Reused by the success page + the purchases table.
+ * "Download your product" — the entry point to the LICENSE-GATED download.
+ *
+ * It no longer downloads on click. The deliverable is released only after the buyer proves they
+ * hold the license key, so this navigates to the dedicated download page for the order
+ * (`/download/{id}`), where they enter the key and the stream is requested with their Bearer token.
+ *
+ * That page enforces nothing on its own — the API is the authority (auth + ownership + paid +
+ * matching license). This is just the door to it. Used by the invoice and the purchases table.
  */
 export function DownloadButton({
   orderId,
-  label = "Download",
-  filename,
+  label = "Download your product",
+  size = "default",
+  variant = "default",
+  className,
 }: {
   orderId: number;
   label?: string;
-  filename?: string;
+  size?: "default" | "sm" | "lg";
+  variant?: "default" | "outline";
+  className?: string;
 }) {
-  const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-
-  async function handleDownload() {
-    setError(undefined);
-    const url = apiUrl(`/orders/${orderId}/download`);
-    if (!url) {
-      setError("Downloads are unavailable right now.");
-      return;
-    }
-
-    setPending(true);
-    try {
-      const token = useAuthStore.getState().token;
-      const res = await fetch(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) {
-        throw new Error(String(res.status));
-      }
-      const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = objectUrl;
-      anchor.download = filename ?? `order-${orderId}.zip`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(objectUrl);
-    } catch {
-      setError("Couldn't download the file. Please try again.");
-    } finally {
-      setPending(false);
-    }
-  }
-
   return (
-    <div className="flex flex-col gap-1">
-      <Button onClick={handleDownload} disabled={pending}>
-        <Download aria-hidden />
-        {pending ? "Preparing…" : label}
-      </Button>
-      {error ? (
-        <p role="alert" className="text-xs text-destructive">
-          {error}
-        </p>
-      ) : null}
-    </div>
+    <Link
+      href={`/download/${orderId}`}
+      className={cn(buttonVariants({ variant, size }), "w-full gap-2", className)}
+    >
+      <Download className="size-4" aria-hidden />
+      {label}
+    </Link>
   );
 }

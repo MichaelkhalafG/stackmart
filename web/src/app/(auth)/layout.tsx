@@ -1,10 +1,15 @@
-import { Container } from "@/components/layout/Container";
-
 /**
- * The 1280px page container for the auth routes. It used to live in the root layout, but the
- * landing design is full-bleed, so each non-landing section now applies it. Width and padding are
- * unchanged from before (`container-page` + `py-6`).
+ * The auth route group — /login, /register, /forgot-password, /reset-password.
+ *
+ * STANDALONE, FULL-PAGE screens: deliberately NO navbar and NO footer (that is why the site chrome
+ * was lifted out of the root layout into `<SiteChrome>`, which every OTHER group opts into).
+ *
+ * EDGE TO EDGE: no padding and no background here — the group hands the entire viewport to its
+ * child. `AuthShell` then spans it corner to corner as a true two-panel split, rather than a card
+ * floating in a margin.
+ *
+ * Navigation home is not lost — `AuthShell` renders the MDN STACKMART logo lockup, which links to `/`.
  */
-export default function AuthSectionLayout({ children }: { children: React.ReactNode }) {
-  return <Container className="py-6">{children}</Container>;
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  return <div className="flex min-h-dvh flex-col">{children}</div>;
 }

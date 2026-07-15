@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { api, ApiError } from "@/lib/api";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { email as emailValidator, firstError, matches, minLength, required } from "@/lib/validation";
 
 import { AuthField, FormError } from "./AuthField";
 
@@ -27,7 +28,7 @@ export function ResetPasswordForm({
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [mismatch, setMismatch] = useState<string | undefined>();
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -57,20 +58,35 @@ export function ResetPasswordForm({
     );
   }
 
+  // Submit-time gate — same validators the fields run on blur.
+  const passwordValidator = (value: string) =>
+    firstError(
+      value,
+      required("Choose a new password"),
+      minLength(8, "Password must be at least 8 characters"),
+    );
+  const confirmValidator = (value: string) =>
+    firstError(value, required("Re-enter your new password"), matches(password));
+
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+
+    const errors: Record<string, string> = {};
+    const emailError = emailValidator()(email);
+    const passwordError = passwordValidator(password);
+    const confirmError = confirmValidator(confirm);
+    if (emailError) errors.email = emailError;
+    if (passwordError) errors.password = passwordError;
+    if (confirmError) errors.confirm = confirmError;
+
+    setClientErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    mutation.mutate();
+  }
+
   return (
-    <form
-      noValidate
-      className="flex flex-col gap-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (password !== confirm) {
-          setMismatch("Passwords do not match.");
-          return;
-        }
-        setMismatch(undefined);
-        mutation.mutate();
-      }}
-    >
+    <form noValidate className="flex flex-col gap-4" onSubmit={handleSubmit}>
       {generalError ? <FormError message={generalError} /> : null}
       {!initialToken ? (
         <FormError message="This reset link is missing its token — request a new one from “Forgot your password?”." />
@@ -83,7 +99,9 @@ export function ResetPasswordForm({
         required
         value={email}
         onChange={setEmail}
-        error={fieldErrors?.email?.[0]}
+        validate={emailValidator()}
+        hint="The address this reset link was sent to."
+        error={clientErrors.email ?? fieldErrors?.email?.[0]}
       />
       <AuthField
         id="password"
@@ -93,7 +111,9 @@ export function ResetPasswordForm({
         required
         value={password}
         onChange={setPassword}
-        error={fieldErrors?.password?.[0]}
+        validate={passwordValidator}
+        hint="At least 8 characters."
+        error={clientErrors.password ?? fieldErrors?.password?.[0]}
       />
       <AuthField
         id="password_confirmation"
@@ -103,7 +123,8 @@ export function ResetPasswordForm({
         required
         value={confirm}
         onChange={setConfirm}
-        error={mismatch}
+        validate={confirmValidator}
+        error={clientErrors.confirm}
       />
       <Button type="submit" size="lg" block loading={mutation.isPending} className="mt-2">
         Reset password

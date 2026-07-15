@@ -61,9 +61,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
+      {/* Inset on phones (a 340px card + right-6 needs 364px — it clipped at 360px); the design's
+          bottom-right stack from sm up. */}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed right-6 bottom-6 z-[120] flex flex-col gap-3"
+        className="pointer-events-none fixed inset-x-4 bottom-4 z-[120] flex flex-col gap-3 sm:inset-x-auto sm:right-6 sm:bottom-6"
       >
         {items.map((item) => (
           <ToastCard key={item.id} item={item} onDismiss={() => dismiss(item.id)} />

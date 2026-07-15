@@ -10,6 +10,20 @@ import { categoryInitials, formatCompactMoney, type CategoryWithCount, type Feat
 import { Logo } from "./Logo";
 import { UserMenu } from "./UserMenu";
 
+/**
+ * The signed-in user's name as a terminal handle: "Michael Khalaf" → "michael_khalaf".
+ * Lowercased, spaces → underscores, anything non-handle-ish dropped. Purely presentational — the
+ * real name is still what the UserMenu and the account page show.
+ */
+function terminalHandle(name: string): string {
+  const handle = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9._-]/g, "");
+  return handle === "" ? "user" : handle;
+}
+
 /** Nav links. "How it works" anchors a landing section; "Guidelines" is a real page. */
 const NAV_LINKS = [
   { href: "/sell", label: "Sell your SaaS" },
@@ -176,7 +190,29 @@ export function Header({
               {!hydrated ? (
                 <div className="h-[38px] w-[150px]" aria-hidden />
               ) : user ? (
-                <UserMenu user={user} />
+                <div className="flex items-center gap-2.5">
+                  {/*
+                    Signed-in identity in the site's coding voice: a mono terminal prompt with the
+                    user's handle and a blinking block cursor. `.anim-blink` is already disabled
+                    under prefers-reduced-motion, so the cursor renders solid (never flickering) for
+                    users who ask for less motion. Hidden below `xl` so it never crowds the nav.
+                  */}
+                  <span
+                    className="mono hidden items-center gap-0.5 text-[12.5px] text-fg-muted xl:inline-flex"
+                    title={user.name}
+                  >
+                    <span className="text-accent">~/</span>
+                    <span className="max-w-[14ch] truncate font-medium text-primary">
+                      {terminalHandle(user.name)}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="anim-blink ml-0.5 inline-block h-[13px] w-[7px] bg-accent align-middle"
+                    />
+                  </span>
+
+                  <UserMenu user={user} />
+                </div>
               ) : (
                 <>
                   <Link
@@ -220,15 +256,15 @@ export function Header({
             aria-modal="true"
             aria-label="Menu"
             onClick={(event) => event.stopPropagation()}
-            className="anim-slide-in absolute top-0 right-0 flex h-full w-[min(320px,86vw)] flex-col bg-canvas p-5 shadow-drawer"
+            className="anim-slide-in absolute top-0 right-0 flex h-full w-[min(340px,88vw)] flex-col overflow-y-auto overscroll-contain bg-canvas p-5 shadow-drawer"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-none items-center justify-between">
               <Logo />
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileOpen(false)}
-                className="flex size-[38px] items-center justify-center rounded-md border border-border bg-canvas-subtle text-primary"
+                className="flex size-[42px] items-center justify-center rounded-md border border-border bg-canvas-subtle text-primary"
               >
                 <X className="size-[18px]" aria-hidden />
               </button>
@@ -254,7 +290,44 @@ export function Header({
               ))}
             </nav>
 
-            <div className="mt-2 flex flex-col gap-3 border-t border-border pt-5">
+            {/*
+              CATEGORIES ON TOUCH. The desktop mega-menu opens on HOVER, which does not exist on a
+              phone — so the categories were simply unreachable there. They now live in the drawer as
+              a plain, tappable list (same real data, same /marketplace?category= links). Rows are 44px
+              tall to meet the tap-target guideline.
+            */}
+            {categories.length > 0 ? (
+              <div className="mt-5 border-t border-border pt-5">
+                <p className="mb-2 px-2.5 text-[11px] font-semibold tracking-[0.08em] text-fg-muted uppercase">
+                  Browse by category
+                </p>
+
+                <div className="flex flex-col gap-0.5">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.id}
+                      href={`/marketplace?category=${encodeURIComponent(category.slug)}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex min-h-11 items-center gap-3 rounded-md px-2.5 py-2 hover:bg-canvas-subtle"
+                    >
+                      <span className="flex size-8 flex-none items-center justify-center rounded-md bg-tag-bg text-[12px] font-bold text-accent">
+                        {categoryInitials(category.name)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-primary">
+                        {category.name}
+                      </span>
+                      {category.count !== null ? (
+                        <span className="mono flex-none text-[11px] text-fg-muted">
+                          {category.count}
+                        </span>
+                      ) : null}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex flex-none flex-col gap-3 border-t border-border pt-5">
               {hydrated && user ? (
                 <Link
                   href="/account"

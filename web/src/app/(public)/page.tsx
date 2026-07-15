@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { fetchCategoriesWithCounts, fetchFeatured } from "@/lib/catalog";
+import { fetchCategoriesWithCounts, fetchFeatured, fetchTopPriced } from "@/lib/catalog";
 import { CategoryGrid } from "@/components/landing/CategoryGrid";
 import { FeaturedListings } from "@/components/landing/FeaturedListings";
 import { Hero } from "@/components/landing/Hero";
@@ -51,10 +51,14 @@ export const revalidate = 300;
 /** The design's featured grid is a row of three. */
 const FEATURED_LIMIT = 3;
 
+/** The hero cluster is three cards: the priciest listing up front, two behind it. */
+const HERO_LIMIT = 3;
+
 export default async function HomePage() {
-  const [featured, categories] = await Promise.all([
+  const [featured, categories, topPriced] = await Promise.all([
     fetchFeatured(FEATURED_LIMIT),
     fetchCategoriesWithCounts(),
+    fetchTopPriced(HERO_LIMIT),
   ]);
 
   return (
@@ -62,7 +66,7 @@ export default async function HomePage() {
       <WebsiteJsonLd />
       <OrganizationJsonLd />
 
-      <Hero />
+      <Hero products={topPriced} />
       <TrustStats />
       <FeaturedListings products={featured} />
       <HowItWorks />

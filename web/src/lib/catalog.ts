@@ -91,8 +91,31 @@ export async function fetchFeatured(limit: number): Promise<FeaturedProduct[]> {
   const flagged = products.filter((product) => product.is_featured);
   const picked = (flagged.length > 0 ? flagged : products).slice(0, limit);
 
+  return withMrr(picked);
+}
+
+/**
+ * The highest-priced published listings — the hero's card cluster.
+ *
+ * Sorted by the API, not by us: `GET /products?sort=price_desc` is an already-frozen, already-tested
+ * value of the `sort` enum (`newest|price_asc|price_desc`), so this needed no API change. Sorting
+ * in-page would have been wrong anyway — the endpoint paginates at 12, so we would only ever be
+ * ranking the first page, not the catalog.
+ *
+ * Enriched with MRR from the detail endpoint (the list contract carries no `metrics`), because the
+ * hero's front card shows MRR alongside the asking price. Returns fewer than `limit` when fewer
+ * exist, and `[]` if the API is unreachable — the hero then falls back to its own composition.
+ */
+export async function fetchTopPriced(limit: number): Promise<FeaturedProduct[]> {
+  const products = await fetchProducts("?sort=price_desc");
+
+  return withMrr(products.slice(0, limit));
+}
+
+/** Attach `metrics.mrr` (dollars) from `GET /products/{slug}` — `null` when absent/unreachable. */
+async function withMrr(products: ProductListItem[]): Promise<FeaturedProduct[]> {
   return Promise.all(
-    picked.map(async (product) => {
+    products.map(async (product) => {
       const json = await getJson<ItemResponse<{ metrics?: ProductMetrics }>>(
         `/products/${encodeURIComponent(product.slug)}`,
       );

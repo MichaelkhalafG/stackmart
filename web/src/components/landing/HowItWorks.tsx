@@ -66,11 +66,15 @@ function CodeBackdrop() {
       {/* Technical grid */}
       <div className="how-grid absolute inset-0" />
 
-      {/* Oversized bracket glyphs */}
-      <span className="how-glyph mono absolute -top-10 left-[3%] text-[19rem] leading-none font-bold select-none">
+      {/* Oversized bracket glyphs.
+          Only `.how-grid` carries the radial readability mask — these do NOT. At 19rem (304px) on a
+          360px phone they land straight on top of the centred heading (the one piece of copy here
+          that is NOT on an opaque card), so they are decorative crowding. Hidden below `md`;
+          unchanged from `md` up. */}
+      <span className="how-glyph mono absolute -top-10 left-[3%] text-[19rem] leading-none font-bold select-none max-md:hidden">
         {"{"}
       </span>
-      <span className="how-glyph mono absolute -bottom-24 right-[3%] text-[19rem] leading-none font-bold select-none">
+      <span className="how-glyph mono absolute -bottom-24 right-[3%] text-[19rem] leading-none font-bold select-none max-md:hidden">
         {"}"}
       </span>
 
@@ -92,8 +96,11 @@ function CodeBackdrop() {
         </pre>
       </div>
 
-      {/* Narrow screens: a single centred code whisper instead of the two columns */}
-      <pre className="how-code mono absolute top-8 left-1/2 -translate-x-1/2 text-[11px] leading-[1.9] whitespace-pre select-none lg:hidden">
+      {/* Narrow screens: a single centred code whisper instead of the two columns.
+          Below `md` the section's top padding tightens, which put this line straight behind the
+          "How it works" eyebrow — so on phones it drops to the bottom gutter, clear of the cards,
+          where it reads as edge texture. `md`+ keeps the original `top-8` placement. */}
+      <pre className="how-code mono absolute top-8 left-1/2 -translate-x-1/2 text-[11px] leading-[1.9] whitespace-pre select-none max-md:top-auto max-md:bottom-4 lg:hidden">
         {"</>  verified  ·  escrow  ·  handover"}
       </pre>
     </div>
@@ -105,29 +112,32 @@ export function HowItWorks() {
     <section id="how" className="how-base relative scroll-mt-20 overflow-hidden border-t border-border">
       <CodeBackdrop />
 
-      <div className="container-page relative py-[clamp(64px,8vw,108px)]">
-        <div className="mx-auto mb-[54px] max-w-[660px] text-center">
+      {/* All mobile tuning below is `max-md:`-scoped (lowered clamp floors + tighter spacing only),
+          so the `md`+ rendering is byte-identical to the approved design. */}
+      <div className="container-page relative py-[clamp(64px,8vw,108px)] max-md:py-[clamp(48px,8vw,108px)]">
+        <div className="mx-auto mb-[54px] max-w-[660px] text-center max-md:mb-8">
           <div className="text-[13px] font-semibold tracking-[0.08em] text-accent uppercase">
             How it works
           </div>
-          <h2 className="mt-2.5 text-[clamp(1.9rem,3.2vw,2.8rem)] font-bold tracking-[-0.025em] text-primary">
+          <h2 className="mt-2.5 text-[clamp(1.9rem,3.2vw,2.8rem)] font-bold tracking-[-0.025em] text-primary max-md:text-[clamp(1.6rem,3.2vw,2.8rem)]">
             From browsing to owning, without the guesswork
           </h2>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6">
+        {/* auto-fit/minmax(260px) already collapses to one full-width column on phones — kept as-is. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-6 max-md:gap-4">
           {STEPS.map(({ icon: Icon, step, title, body }) => (
             <div
               key={step}
-              className="rounded-[10px] border border-border bg-canvas p-[30px]"
+              className="rounded-[10px] border border-border bg-canvas p-[30px] max-md:p-6"
             >
               <div className="flex items-center justify-between">
-                <div className="flex size-[50px] items-center justify-center rounded-lg bg-tag-bg">
+                <div className="flex size-[50px] items-center justify-center rounded-lg bg-tag-bg max-md:size-[46px]">
                   <Icon className="size-[23px] text-accent" strokeWidth={2} aria-hidden />
                 </div>
-                <span className="mono text-[26px] font-semibold text-accent">{step}</span>
+                <span className="mono text-[26px] font-semibold text-accent max-md:text-[22px]">{step}</span>
               </div>
-              <h3 className="mt-[22px] text-[1.3rem] font-semibold text-primary">{title}</h3>
+              <h3 className="mt-[22px] text-[1.3rem] font-semibold text-primary max-md:mt-4">{title}</h3>
               <p className="mt-2 text-[15px] leading-[1.55] text-fg-muted">{body}</p>
             </div>
           ))}

@@ -13,13 +13,21 @@ Thanks for your purchase on {{ config('app.name') }} — your product is ready t
 {{ $order->license_key }}
 @endcomponent
 
-Download your product (a secure ZIP) and find your license key any time on your purchases page:
+**Keep this key — you need it to download.** Your download is license-gated: you'll be asked to sign
+in and enter the key above before the source-code ZIP is released. It is also your proof that your
+copy is a paid one.
 
-@component('mail::button', ['url' => $purchasesUrl])
+@component('mail::button', ['url' => $downloadUrl])
+Download your product
+@endcomponent
+
+Your license key and download stay available on your purchases page:
+
+@component('mail::button', ['url' => $purchasesUrl, 'color' => 'success'])
 Go to your purchases
 @endcomponent
 
-Keep this license key safe — it's your proof of purchase.
+If the key doesn't work, make sure you're signed in as the account that made the purchase.
 
 Thanks,<br>
 {{ config('app.name') }}

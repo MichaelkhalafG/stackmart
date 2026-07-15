@@ -23,20 +23,32 @@ const TRUST_MARKS = [
 
 export function TrustStats() {
   return (
-    <section className="mesh-stats border-y border-border">
+    // MOBILE: hidden. The hero's own trust line already carries $2.4M / 180 / 12k+ on a phone, so
+    // this band was the same numbers a second time, one scroll later. Desktop keeps it — there the
+    // hero shows the figures inline in a single row and the band still earns its place as a
+    // full-width proof section (plus the three trust marks, which the hero does not carry).
+    <section className="mesh-stats border-y border-border max-md:hidden">
       <div className="container-page py-[clamp(48px,6vw,80px)]">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-x-6 gap-y-8">
+        {/* Phones (<sm): a tight 2×2 grid inside ONE bordered card, so the four figures read as a
+            single stats block instead of four lonely centred numbers. Every mobile-only class is
+            `max-sm:`-scoped (or restored at `sm`), so ≥640px is byte-identical to the approved design. */}
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] gap-x-6 gap-y-8 max-sm:grid-cols-2 max-sm:gap-0 max-sm:overflow-hidden max-sm:rounded-[10px] max-sm:border max-sm:border-border max-sm:bg-canvas">
           {STATS.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="mono text-[clamp(2.6rem,5vw,3.7rem)] leading-none font-semibold tracking-[-0.03em] text-accent">
+            <div
+              key={stat.label}
+              // The 2×2 dividers: right border on the left column, bottom border on the top row.
+              className="text-center max-sm:px-2 max-sm:py-5 max-sm:odd:border-r max-sm:[&:nth-child(-n+2)]:border-b"
+            >
+              <div className="mono text-[clamp(1.9rem,5vw,3.7rem)] leading-none font-semibold tracking-[-0.03em] text-accent sm:text-[clamp(2.6rem,5vw,3.7rem)]">
                 {stat.value}
               </div>
-              <div className="mt-3 text-sm text-fg-muted">{stat.label}</div>
+              <div className="mt-3 text-sm text-fg-muted max-sm:mt-1.5">{stat.label}</div>
             </div>
           ))}
         </div>
 
-        <div className="mt-11 flex flex-wrap justify-center gap-x-10 gap-y-3.5 border-t border-border pt-8">
+        {/* Phones: a neat left-aligned column instead of a centre-wrapped row breaking into ragged lines. */}
+        <div className="mt-11 flex flex-wrap justify-center gap-x-10 gap-y-3.5 border-t border-border pt-8 max-sm:mt-8 max-sm:flex-col max-sm:items-start max-sm:gap-y-3 max-sm:pt-6">
           {TRUST_MARKS.map(({ icon: Icon, label }) => (
             <span
               key={label}
