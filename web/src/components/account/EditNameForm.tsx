@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check, ChevronDown, UserRound } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { useAuthStore, type User } from "@/store/auth";
 import { Field } from "@/components/form/Field";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,10 @@ type ProfileResponse = { data: User; message: string };
 export function EditNameForm({ user }: { user: User }) {
   const [name, setName] = useState(user.name);
   const [clientError, setClientError] = useState<string | undefined>();
+  // Mobile-only disclosure: the card is a tappable header, collapsed by default (<md), so the
+  // account page isn't a long stack of open forms. `md:block` below keeps it always-open on desktop.
+  const [open, setOpen] = useState(false);
+  const bodyId = useId();
   const { toast } = useToast();
 
   const validate = (value: string) =>
@@ -82,13 +87,44 @@ export function EditNameForm({ user }: { user: User }) {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-canvas p-6 sm:p-7">
-      <h2 className="text-[15px] font-bold text-primary">Display name</h2>
-      <p className="mt-1 text-[13px] leading-[1.5] text-fg-muted">
+    <section className="rounded-xl border border-l-2 border-border border-l-accent bg-canvas p-6 shadow-sm sm:p-7">
+      <h2 className="m-0">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          className="flex min-h-[44px] w-full items-center gap-3 text-left md:pointer-events-none md:min-h-0"
+        >
+          <span
+            aria-hidden
+            className="flex size-9 flex-none items-center justify-center rounded-lg bg-tag-bg text-accent"
+          >
+            <UserRound className="size-[18px]" strokeWidth={2} />
+          </span>
+          <span className="flex-1 text-[15px] font-bold text-primary">Display name</span>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-5 flex-none text-fg-muted transition-transform duration-200 motion-reduce:transition-none md:hidden",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </h2>
+      <p className="mt-1.5 pl-12 text-[13px] leading-[1.5] text-fg-muted">
         The name shown on your account and on your purchase receipts.
       </p>
 
-      <form noValidate onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+      <form
+        id={bodyId}
+        noValidate
+        onSubmit={handleSubmit}
+        className={cn(
+          "mt-5 flex-col gap-4 border-t border-border pt-5 md:flex",
+          open ? "flex" : "hidden",
+        )}
+      >
         {generalError ? <Alert variant="error">{generalError}</Alert> : null}
 
         {mutation.isSuccess ? (

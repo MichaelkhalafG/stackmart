@@ -71,8 +71,9 @@ export default async function HomePage() {
       <FeaturedListings products={featured} />
       <HowItWorks />
       <Testimonials />
-      <CategoryGrid categories={categories} />
       <SellCta />
+      <CategoryGrid categories={categories} />
+      
     </>
   );
 }

@@ -6,23 +6,12 @@ import type { FeaturedProduct } from "@/lib/catalog";
 import { HeroCardShuffle } from "./HeroCardShuffle";
 
 /**
- * Hero — approved landing design. Copy column + the navy gradient-mesh visual with the card cluster.
- *
- * The visual is an AUTO-ROTATING 3D CARD SHUFFLE of the top-priciest real listings (see
- * `HeroCardShuffle`): the front card is dealt away and recedes into the deck while the next listing
- * rises forward, cycling every ~4.5s, pausing on hover/touch/focus, and holding a static composition
- * under `prefers-reduced-motion`. Every visible card is a real focusable link to `/listing/{slug}`.
- *
- * TWO HEROES, ONE PER FORM FACTOR — below `md` a purpose-built mobile hero renders (`md:hidden`) and
- * the approved desktop hero (`hidden md:grid`) is untouched. Each hosts its own `HeroCardShuffle`
- * sized to its panel; both panels are FIXED-HEIGHT, so the animation never shifts page layout. Mobile
- * order: badge → headline → short subhead → shuffle visual → side-by-side CTAs → trust row.
- *
- * FAIL-SOFT: `products` is a fail-soft fetch; zero products → the visual panel is omitted and the
- * hero is the copy column alone. We never invent a listing to fill the space.
+ * Hero — copy column + the navy gradient-mesh visual (an auto-rotating card shuffle, see
+ * `HeroCardShuffle`). Separate mobile (`md:hidden`) and desktop (`hidden md:grid`) layouts, each with
+ * its own fixed-height shuffle panel. `products` is fail-soft: zero → the visual is omitted.
  */
 
-/** The three inline proof figures. Static marketing copy, as designed. */
+/** the three inline proof figures — static marketing copy. */
 const HERO_STATS = [
   { value: "$2.4M", label: "in deals" },
   { value: "180", label: "vetted listings" },
@@ -30,36 +19,30 @@ const HERO_STATS = [
 ];
 
 export function Hero({ products }: { products: FeaturedProduct[] }) {
-  // The hero visual renders whenever there is at least one listing; the shuffle itself degrades to a
-  // static single card for a thin catalog and to nothing for an empty one.
   const hasListings = products.length > 0;
 
   return (
     <section className="mesh-hero relative">
-      {/* ══ MOBILE hero (< md) — purpose-built to land as one first screen ══════════════════════
-          Order: badge → headline → short subhead → shuffle visual → side-by-side CTAs → trust. */}
+      {/* Mobile hero (<md): badge → headline → subhead → shuffle → CTAs → trust. */}
       <div className="container-page pt-6 pb-9 md:hidden">
         <span className="inline-flex items-center gap-2 rounded-md bg-tag-bg px-3 py-1 text-xs font-semibold text-tag-fg">
           <span className="size-1.5 rounded-full bg-accent" aria-hidden />
           Curated micro-SaaS marketplace
         </span>
 
-        {/* Sized for a phone column: the desktop clamp bottoms out at 2.1rem, set for a ≥370px
-            column, not a 328px one. Same two-tone headline, gradient on the payoff line. */}
+        {/* Phone-sized clamp (the desktop 2.1rem floor overflows a 328px column). */}
         <h1 className="mt-4 text-[clamp(2rem,7vw,2.6rem)] leading-[1.05] font-bold tracking-[-0.03em] text-primary">
           Skip the build.
           <br />
           <span className="text-gradient-accent">Buy the business.</span>
         </h1>
 
-        {/* Short, mobile-only subhead — the desktop paragraph runs to four lines on a phone. Same
-            value prop, one tight line. (The desktop copy below is unchanged.) */}
+        {/* Short mobile-only subhead — the desktop paragraph runs to four lines on a phone. */}
         <p className="mt-3 text-[15px] leading-[1.5] text-fg-muted">
           Acquire a vetted, profitable micro-SaaS — verified MRR, clean churn, audited code.
         </p>
 
-        {/* Auto-rotating card shuffle on the navy mesh panel. Fixed height so the animation never
-            shifts the CTAs/trust below it; `overflow-hidden` clips the receding cards to the panel. */}
+        {/* Fixed-height panel so the shuffle never shifts the CTAs below it; clips receding cards. */}
         {hasListings ? (
           <section
             aria-label="Top listings"
@@ -73,9 +56,7 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
           </section>
         ) : null}
 
-        {/* CTAs side by side, equal width, ≥44px tall (min-h-11). No `whitespace-nowrap`: at any
-            width the labels fit on one line, and if a narrower phone ever forced a wrap they grow
-            in height together rather than overflowing. */}
+        {/* Equal-width CTAs, ≥44px tall. No `whitespace-nowrap` — a forced wrap grows height, not overflow. */}
         <div className="mt-5 flex gap-3">
           <Link
             href="/marketplace"
@@ -91,9 +72,7 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
           </Link>
         </div>
 
-        {/* Trust numbers — a tidy 3-across strip, everything CENTER-aligned. Each cell centers its
-            mono figure over a muted label, with even padding and clean vertical dividers, so the row
-            reads as one intentional block instead of three cramped left-hung numbers. */}
+        {/* Trust numbers — 3-across strip, each cell centered with a divider between. */}
         <div className="mt-5 grid grid-cols-3 overflow-hidden rounded-xl border border-border bg-canvas/70">
           {HERO_STATS.map((stat, index) => (
             <div
@@ -111,9 +90,7 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
         </div>
       </div>
 
-      {/* ══ DESKTOP hero (md+) — the approved design ════════════════════════════════════════════
-          Single column from md, two-column split at lg. Hidden below md, where the mobile hero above
-          takes over. Only the visual changed: the static floating cluster is now the card shuffle. */}
+      {/* Desktop hero (md+): single column from md, two-column split at lg. */}
       <div className="container-page hidden grid-cols-1 items-center gap-[clamp(36px,5vw,72px)] pt-[clamp(52px,6.5vw,100px)] pb-[clamp(48px,6vw,84px)] md:grid lg:grid-cols-2">
         {/* ── Copy ─────────────────────────────────────────────────────────── */}
         <div>
@@ -122,8 +99,7 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
             Curated micro-SaaS marketplace
           </span>
 
-          {/* Two-tone headline: solid navy line, then the payoff line in the royal-blue → violet
-              gradient (`.text-gradient-accent`, clipped to the glyphs). */}
+          {/* Two-tone headline — navy line, then payoff line in the accent gradient. */}
           <h1 className="mt-[22px] text-[clamp(2.1rem,5vw,4.4rem)] leading-[1.02] font-bold tracking-[-0.03em] text-primary">
             Skip the build.
             <br />
@@ -165,8 +141,7 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
           </div>
         </div>
 
-        {/* ── DESKTOP visual (md+): gradient mesh + auto-rotating card shuffle ─────
-            Fixed min-height panel; `overflow-hidden` clips the dealt cards to it. */}
+        {/* Desktop visual (md+): fixed min-height panel; clips the dealt cards to it. */}
         {hasListings ? (
           <section
             aria-label="Top listings"

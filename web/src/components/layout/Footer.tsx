@@ -4,31 +4,12 @@ import { ChevronDown } from "lucide-react";
 import { Logo } from "./Logo";
 
 /**
- * Site footer — the approved landing design: the MDN logo lockup + blurb, then three link
- * columns, then a legal bar. The design's footer sits on the LIGHT canvas, so the logo uses its
- * navy variant here (the `light` variant exists for dark surfaces).
+ * Site footer — dark navy coding surface (`.panel-navy` + `.grid-motif-hero`). Desktop: logo +
+ * tagline + status chip + three link columns + legal row. Mobile (`md:hidden`): brand, two CTA
+ * buttons, link groups as native `<details>` accordions (no JS — stays a Server Component), legal.
  *
- * TWO FOOTERS, ONE PER FORM FACTOR. Restacking the desktop footer on a phone produced an endless
- * ~13-link column that buried the copyright a full screen below the fold. So below `md` a
- * PURPOSE-BUILT mobile footer renders instead (`md:hidden`), and the approved desktop footer
- * (`hidden md:block`) is untouched:
- *
- *   brand + tagline → the two primary CTAs as full-width buttons → the three link groups as
- *   COLLAPSED accordion sections → a single compact legal row → copyright.
- *
- * The accordions are native `<details>`/`<summary>`: no JS, no state, no client component, and
- * therefore no hydration risk in this Server Component (a JS accordion here would have forced the
- * whole footer client-side for the sake of a disclosure toggle). They ship collapsed, which is what
- * turns 13 stacked links into three 48px rows.
- *
- * Both footers render from the SAME `COLUMNS` / `LEGAL` constants — the mobile footer is a second
- * layout of the same data, never a second copy of it.
- *
- * The Resources column now resolves to the real `/guidelines` page (the buyer/seller guides and the
- * FAQ are its sections, linked by anchor), and the legal bar resolves to the real `/terms` and
- * `/privacy` pages. The remaining marketing destinations (Cookies, Careers, Blog, Contact) are
- * still `href="#"` placeholders, as in the approved design — they become real links when those
- * pages ship (marketing).
+ * Every href is a real route or an anchor that exists on its target (`/#about`, `/#how`,
+ * `/guidelines#faq`). The old dead links (About/Careers/Blog/Contact/Cookies, `/how-it-works`) are gone.
  */
 const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string }> }> = [
   {
@@ -36,27 +17,22 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
     links: [
       { label: "Browse listings", href: "/marketplace" },
       { label: "Categories", href: "/#about" },
-      { label: "Featured", href: "/#marketplace" },
-      { label: "Sell your SaaS", href: "/sell" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/#about" },
-      { label: "Careers", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "List your SaaS", href: "/sell" },
     ],
   },
   {
     title: "Resources",
     links: [
-      { label: "Guidelines", href: "/guidelines" },
-      { label: "Seller guide", href: "/guidelines#for-sellers" },
-      { label: "Buyer guide", href: "/guidelines#for-buyers" },
       { label: "How it works", href: "/#how" },
+      { label: "Guidelines", href: "/guidelines" },
       { label: "FAQ", href: "/guidelines#faq" },
+    ],
+  },
+  {
+    title: "Account",
+    links: [
+      { label: "Sign in", href: "/login" },
+      { label: "Create account", href: "/register" },
     ],
   },
 ];
@@ -64,52 +40,69 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
 const LEGAL = [
   { label: "Terms", href: "/terms" },
   { label: "Privacy", href: "/privacy" },
-  { label: "Cookies", href: "#" },
 ];
+
+/** lavender focus ring — visible on navy (royal isn't). */
+const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg";
 
 export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t border-border bg-canvas">
-      {/* ── DESKTOP footer (md+) — the approved design, unchanged ───────────── */}
-      <div className="container-page hidden pt-[clamp(48px,6vw,76px)] pb-8 md:block">
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-8 gap-y-10">
-          <div className="min-w-[200px]">
-            <Logo size="footer" />
-            <p className="mt-4 max-w-[270px] text-sm leading-[1.55] text-fg-muted">
+    <footer className="panel-navy relative overflow-hidden text-canvas">
+      {/* Faint navy grid + a royal top-edge accent line — the coding-section language. */}
+      <div className="grid-motif-hero pointer-events-none absolute inset-0" aria-hidden />
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent"
+        aria-hidden
+      />
+
+      {/* ── DESKTOP (md+) ──────────────────────────────────────────────────── */}
+      <div className="relative z-10 container-page hidden pt-[clamp(52px,6vw,80px)] pb-9 md:block">
+        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-x-8 gap-y-10">
+          <div className="max-w-[320px]">
+            <Logo size="footer" variant="light" />
+            <p className="mt-4 text-sm leading-[1.6] text-canvas/65">
               The curated marketplace for buying and selling vetted, profitable micro-SaaS.
+            </p>
+            <p className="mono mt-5 inline-flex items-center gap-2 rounded-md border border-canvas/15 bg-canvas/5 px-2.5 py-1.5 text-[11.5px] tracking-wide text-tag-bg/85">
+              <span
+                className="anim-pulse-dot inline-block size-1.5 rounded-full bg-accent"
+                aria-hidden
+              />
+              curated · code-audited · shipped
             </p>
           </div>
 
           {COLUMNS.map((column) => (
-            <div key={column.title}>
-              <div className="text-[13px] font-semibold tracking-[0.06em] text-primary uppercase">
+            <nav key={column.title} aria-label={column.title}>
+              <div className="mono text-[11px] font-semibold tracking-[0.14em] text-tag-bg/70 uppercase">
                 {column.title}
               </div>
-              <div className="mt-4 flex flex-col gap-2.5 text-sm">
+              <ul className="mt-4 flex flex-col gap-2.5 text-sm">
                 {column.links.map((link) => (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className="text-fg-muted transition-colors hover:text-accent"
-                  >
-                    {link.label}
-                  </Link>
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className={`rounded-sm text-canvas/65 transition-colors hover:text-canvas ${FOCUS}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
                 ))}
-              </div>
-            </div>
+              </ul>
+            </nav>
           ))}
         </div>
 
-        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-[13px] text-fg-muted">
+        <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-canvas/10 pt-6 text-[13px] text-canvas/55">
           <span>© {year} MDN STACKMART, Inc. All rights reserved.</span>
-          <div className="flex flex-wrap gap-[22px]">
+          <div className="flex flex-wrap gap-6">
             {LEGAL.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className="text-fg-muted transition-colors hover:text-accent"
+                className={`rounded-sm text-canvas/60 transition-colors hover:text-canvas ${FOCUS}`}
               >
                 {link.label}
               </Link>
@@ -118,71 +111,76 @@ export function Footer() {
         </div>
       </div>
 
-      {/* ── MOBILE footer (< md) — purpose-built, not a restack ─────────────── */}
-      <div className="container-page pt-10 pb-7 md:hidden">
-        <Logo size="footer" />
-        <p className="mt-3 max-w-[300px] text-sm leading-[1.55] text-fg-muted">
+      {/* ── MOBILE (< md) — purpose-built, not a restack ───────────────────── */}
+      <div className="relative z-10 container-page pt-10 pb-8 md:hidden">
+        <Logo size="footer" variant="light" />
+        <p className="mt-3 max-w-[300px] text-sm leading-[1.55] text-canvas/65">
           The curated marketplace for buying and selling vetted, profitable micro-SaaS.
         </p>
+        <p className="mono mt-4 inline-flex items-center gap-2 text-[11px] tracking-wide text-tag-bg/80">
+          <span
+            className="anim-pulse-dot inline-block size-1.5 rounded-full bg-accent"
+            aria-hidden
+          />
+          curated · code-audited · shipped
+        </p>
 
-        {/* The two things a visitor actually comes here to do, as real buttons. */}
+        {/* The two things a visitor comes here to do, as real buttons. */}
         <div className="mt-6 flex flex-col gap-2.5">
           <Link
             href="/marketplace"
-            className="flex min-h-12 items-center justify-center rounded-md border border-primary bg-primary px-5 text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary-emphasis focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="flex min-h-12 items-center justify-center rounded-md bg-tag-bg px-5 text-[15px] font-semibold text-primary transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             Browse listings
           </Link>
           <Link
             href="/sell"
-            className="flex min-h-12 items-center justify-center rounded-md border border-border bg-canvas px-5 text-[15px] font-semibold text-primary transition-colors hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className={`flex min-h-12 items-center justify-center rounded-md border border-canvas/25 px-5 text-[15px] font-semibold text-canvas transition-colors hover:border-canvas/45 hover:bg-canvas/10 ${FOCUS}`}
           >
-            Sell your SaaS
+            List your SaaS
           </Link>
         </div>
 
-        {/* Collapsed by default — three 48px rows instead of thirteen stacked links. Native
-            <details>, so this stays a Server Component and needs no JS to open. */}
-        <div className="mt-7 border-t border-border">
+        {/* Compact collapsed groups — native <details>, so no JS and no hydration cost. */}
+        <div className="mt-8 border-t border-canvas/10">
           {COLUMNS.map((column) => (
-            <details key={column.title} className="group border-b border-border">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between py-1 text-[13px] font-semibold tracking-[0.06em] text-primary uppercase [&::-webkit-details-marker]:hidden">
+            <details key={column.title} className="group border-b border-canvas/10">
+              <summary className="mono flex min-h-12 cursor-pointer list-none items-center justify-between py-1 text-[11px] font-semibold tracking-[0.12em] text-tag-bg/75 uppercase [&::-webkit-details-marker]:hidden">
                 {column.title}
                 <ChevronDown
                   aria-hidden
-                  className="size-4 text-fg-muted transition-transform duration-200 group-[[open]]:rotate-180 motion-reduce:transition-none"
+                  className="size-4 text-canvas/50 transition-transform duration-200 group-[[open]]:rotate-180 motion-reduce:transition-none"
                 />
               </summary>
-
-              <div className="flex flex-col pb-2">
+              <ul className="flex flex-col pb-2">
                 {column.links.map((link) => (
-                  <Link
-                    key={link.label}
-                    href={link.href}
-                    className="flex min-h-11 items-center text-sm text-fg-muted transition-colors hover:text-accent"
-                  >
-                    {link.label}
-                  </Link>
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className={`flex min-h-11 items-center rounded-sm text-[14px] text-canvas/70 transition-colors hover:text-canvas ${FOCUS}`}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </details>
           ))}
         </div>
 
-        {/* Legal: one compact row, then the copyright. */}
+        {/* Legal row, then copyright. */}
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px]">
           {LEGAL.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="flex min-h-11 items-center text-fg-muted transition-colors hover:text-accent"
+              className={`flex min-h-11 items-center rounded-sm text-canvas/60 transition-colors hover:text-canvas ${FOCUS}`}
             >
               {link.label}
             </Link>
           ))}
         </div>
-
-        <p className="mt-2 text-[12px] leading-relaxed text-fg-muted">
+        <p className="mt-2 text-[12px] leading-relaxed text-canvas/55">
           © {year} MDN STACKMART, Inc. All rights reserved.
         </p>
       </div>

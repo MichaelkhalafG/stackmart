@@ -48,5 +48,6 @@ export function AccountGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <Container className="py-6">{children}</Container>;
+  // `max-md:pt-0` lets each account page's mobile MobilePageHeader sit flush under the navbar.
+  return <Container className="py-6 max-md:pt-0">{children}</Container>;
 }

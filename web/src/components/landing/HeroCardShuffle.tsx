@@ -8,47 +8,20 @@ import { ShieldCheck } from "lucide-react";
 import { formatCompactMoney, revenueMultiple, type FeaturedProduct } from "@/lib/catalog";
 
 /**
- * HeroCardShuffle — the auto-rotating 3D card deck in the hero visual.
- *
- * WHAT IT DOES. Up to six of the top-priciest real listings are laid out as a stack of physical
- * cards. Every ~4.5s the front card is "dealt away" — it lifts, tilts back in Z and fades into the
- * deck — while the card behind it rises forward into the hero position and the whole stack re-settles
- * one place. It cycles forever.
- *
- * HOW THE MOTION WORKS. Each card is permanently rendered; it is only ever assigned one of a small
- * set of fixed layered "slot" poses (a tilted front card, two offset cards angled behind it, and a
- * faded deep pose) — the exact original cluster. Advancing the active index shifts every card down
- * one slot (cyclically) so cards move THROUGH the poses, and a CSS transition on
- * `transform`/`opacity`/`filter` animates each card from its old pose to its new one. Because the
- * poses are fixed and the moves are cyclic-adjacent, the only dramatic move is the front card wrapping
- * to the deep pose — which reads as it receding into the deck. An overshooting cubic-bezier gives the
- * dealt-card settle; opacity resolves faster than the move so the z-index re-order is masked; blur
- * eases on its own curve; and a per-slot `transition-delay` staggers the cards so they don't move in
- * lockstep. GPU-composited throughout — no layout is read or written during the animation.
- *
- * MICRO-DETAILS. The grid motif parallaxes a few px each shuffle; the newly-fronted card regrows its
- * chart bars (staggered) and sweeps a soft royal glow (opacity-only) — both keyed off `data-front`.
- *
- * INTERACTION. Pauses on hover / focus / touch so a card can be read and clicked, then resumes
- * (touch resumes after a short rest). Every VISIBLE card is a real `/listing/{slug}` anchor: keyboard
- * focusable, aria-labelled with the product, visible focus ring, a hover lift and a tap-scale — and
- * because each card owns its own href, a click mid-shuffle always navigates to the right product.
- * The deep (invisible) cards are `aria-hidden`, untabbable and click-through.
- *
- * REDUCED MOTION. `prefers-reduced-motion` stops the auto-rotation (the index never advances) and the
- * CSS disables the transitions/keyframes, so the hero settles into a clean STATIC layered composition
- * — identical to the non-animated design.
- *
- * SSR/HYDRATION. The active index starts at 0 on both server and client and the poses are pure
- * functions of it, so the hydrated markup matches the server exactly; the timer starts only in an
- * effect (client-only).
+ * Auto-rotating 3D card deck (hero visual). Up to six top-priced listings sit in fixed "slot" poses
+ * (front + two behind + a faded deep pose); every ~4.5s the active index advances one slot and CSS
+ * transitions (transform/opacity/filter, per-slot staggered) animate each card to its new pose — the
+ * front card wraps to the deep pose, reading as it receding. Pauses on hover/focus/touch. Every
+ * visible card is a real `/listing/{slug}` anchor (focusable, aria-labelled); deep cards are
+ * aria-hidden and untabbable. Under reduced-motion / SSR the index stays 0, so it renders a static
+ * layered composition that matches the server; the rotation timer is client-only.
  */
 
 type Variant = "mobile" | "desktop";
 
 const ROTATE_MS = 4500;
 
-/** The most cards we deal from — enough variety without overloading the composited layers. */
+/** max cards in the deck. */
 const MAX_CARDS = 6;
 
 /** How many slots are visible (0 = front, 1 = middle, 2 = back); slots ≥ this are the faded deck. */
@@ -58,17 +31,10 @@ const askingOf = (p: FeaturedProduct) =>
   formatCompactMoney((p.price_cents ?? 0) / 100, p.currency);
 
 /**
- * The fixed slot poses — index 0 = front, 1 = middle, 2 = back — REPRODUCING THE ORIGINAL LAYERED
- * CLUSTER: a prominent front card sitting low and tilted one way with strong elevation, a second card
- * offset up-and-across and tilted the OTHER way, and a softer third further up/back. Index 3 is the
- * faded "in the deck" pose every slot ≥ 3 collapses to (including the just-dealt front card, which
- * recedes up-and-back into it).
- *
- * Depth is pure transform + filter, so it composites on the GPU: `scale` shrinks the card AND its
- * box-shadow together (back cards read as lower elevation for free), `rotate` is a 2D tilt with a
- * VARIED direction per slot — like the original, not a uniform head-on 3D fan — and `blur`/`opacity`
- * deepen the recede. The rotation only moves cards THROUGH these poses, so at every frame the cluster
- * is the original overlapping, angled, three-dimensional composition.
+ * Fixed slot poses: 0 = front, 1 = middle, 2 = back, 3 = the faded deck pose every slot ≥ 3 collapses
+ * to (including the just-dealt front card receding into it). Depth is pure transform + filter (GPU):
+ * `scale` shrinks the card with its shadow, `rotate` tilts a varied direction per slot, `blur`/
+ * `opacity` deepen the recede.
  */
 const SLOTS: Record<Variant, { t: string; blur: number; opacity: number }[]> = {
   desktop: [

@@ -17,19 +17,10 @@ import { SortSelect, type SortValue } from "./SortSelect";
 const ALL = "__all";
 
 /**
- * MobileMarketplaceControls (< md only) — the products-first mobile UX. Above the grid sits a
- * compact, sticky control bar (search + a Sort control + a "Filters" button carrying an
- * active-filter count badge); everything heavier — Category, Tech stack, Price — lives one tap away
- * in a bottom-sheet drawer, so the user sees products immediately instead of scrolling past filters.
- *
- * The drawer is the base-ui Dialog primitive (same one the shadcn Dialog is built on), so it comes
- * with a focus trap, Escape-to-close, backdrop click-to-close, body-scroll lock and `aria-modal` for
- * free; we add a grab handle + swipe-down-to-close and a slide-up animation. It renders the SAME
- * filter controls as the desktop sidebar and drives the SAME callbacks — this is layout only, the
- * filter/search/sort logic and URL params are unchanged.
- *
- * Desktop is untouched: this whole component is `md:hidden`, and the drawer can only be opened from
- * the (hidden-on-desktop) bar.
+ * Mobile (<md) marketplace controls: a sticky bar (search + sort + a Filters button with an
+ * active-count badge), with Category/Stack/Price in a bottom-sheet drawer. The drawer is the base-ui
+ * Dialog (focus trap, Escape/backdrop close, scroll lock, aria-modal) plus a grab handle and
+ * swipe-down close. Same filter controls + callbacks as the desktop sidebar — layout only.
  */
 export function MobileMarketplaceControls({
   search,

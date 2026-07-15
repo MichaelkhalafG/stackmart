@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
+
 /**
  * The shared shell for the two long-form legal documents (`/terms`, `/privacy`).
  *
@@ -93,6 +95,8 @@ function Prose({ children }: { children: ReactNode }) {
 type LegalShellProps = {
   /** Mono eyebrow above the headline, e.g. "Legal". */
   eyebrow: string;
+  /** The terminal command for the shared mobile header band, e.g. `mdn legal --terms`. */
+  command: string;
   /** The headline, split so the trailing phrase can take the lavender accent on the navy band. */
   title: string;
   titleAccent: string;
@@ -108,6 +112,7 @@ type LegalShellProps = {
 
 export function LegalShell({
   eyebrow,
+  command,
   title,
   titleAccent,
   lead,
@@ -117,10 +122,24 @@ export function LegalShell({
 }: LegalShellProps) {
   return (
     <>
+      {/* MOBILE (<md): the shared branded navy header band, with the "last updated" chip kept. */}
+      <MobilePageHeader
+        command={command}
+        title={`${title} ${titleAccent}`}
+        subhead={lead}
+        extra={
+          <span className="mono inline-flex items-center gap-2 rounded-md border border-tag-bg/25 bg-tag-bg/10 px-3 py-1.5 text-[12px] text-tag-bg">
+            <span className="anim-pulse-dot size-1.5 rounded-full bg-tag-bg" aria-hidden />
+            last updated · {updated}
+          </span>
+        }
+      />
+
       {/* ── Header — the branded dark navy band (same treatment as /guidelines and the landing's
              dark sections). Royal blue is never used for text here: on navy it fails contrast, so
-             the accent phrase and the chip are lavender. ── */}
-      <section className="mesh-sell relative overflow-hidden">
+             the accent phrase and the chip are lavender. DESKTOP ONLY (md+) — mobile uses the shared
+             MobilePageHeader band above. ── */}
+      <section className="mesh-sell relative hidden overflow-hidden md:block">
         <div className="grid-motif-sell absolute inset-0" aria-hidden />
 
         <div className="relative container-page py-[clamp(56px,7vw,92px)]">

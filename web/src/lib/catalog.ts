@@ -2,15 +2,11 @@ import { apiUrl } from "@/lib/apiBase";
 import type { ProductListItem } from "@/components/product/MarketplaceCard";
 
 /**
- * Server-side catalog data layer for the public pages (landing + header).
- *
- * Every fetch is FAIL-SOFT: a missing NEXT_PUBLIC_API_URL, a network error, or a non-2xx
- * resolves to an empty result instead of throwing, so the page still renders (the sections
- * degrade to their empty state and light up as soon as the API responds). All requests are
- * ISR-cached on the same interval as the pages that use them. Env-driven — no hardcoded host.
+ * Server-side catalog data for the public pages. Every fetch is fail-soft — a missing env, network
+ * error, or non-2xx returns an empty result so the page still renders. ISR-cached; env-driven host.
  */
 
-/** Revalidate window shared by the landing page and the root layout's header data. */
+/** revalidate window shared by the landing and header data. */
 export const CATALOG_REVALIDATE = 300;
 
 /** A category as returned by `GET /api/categories` (12_API_Specification.md). */

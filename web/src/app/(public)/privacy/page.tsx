@@ -349,6 +349,7 @@ export default function PrivacyPage() {
   return (
     <LegalShell
       eyebrow="Legal"
+      command="mdn legal --privacy"
       title="Privacy"
       titleAccent="policy."
       lead="What we collect, why we collect it, and how the sensitive parts — your payout details and the files you upload — are actually protected. We do not sell personal data."

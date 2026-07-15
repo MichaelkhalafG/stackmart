@@ -98,7 +98,11 @@ export function FormSection({
 }) {
   return (
     <section className={cn("flex flex-col", className)}>
-      <div className="mb-[22px] flex items-center gap-[11px]">
+      {/* The numbered section header. Hidden on the mobile Sell wizard (<md), where the branded step
+          strip already shows "01 / 05 · The basics" — so the step title isn't printed twice and the
+          fields start higher. Desktop (all sections at once) keeps it. FormSection is only used by
+          the Sell form, so this is scoped to it. */}
+      <div className="mb-[22px] flex items-center gap-[11px] max-md:hidden">
         <span className="mono flex size-[26px] flex-none items-center justify-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">
           {step}
         </span>

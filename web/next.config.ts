@@ -28,6 +28,12 @@ function storageRemotePatterns(): NonNullable<NextConfig["images"]>["remotePatte
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: storageRemotePatterns(),
+    // Allow the one first-party SVG (`/img/default.svg`). Safe: uploads are validated raster-only and
+    // remotePatterns is `/storage/**`, so no untrusted SVG reaches the optimizer; CSP + attachment
+    // disposition harden it regardless.
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 

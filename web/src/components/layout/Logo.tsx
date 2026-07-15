@@ -4,15 +4,9 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * The MDN STACKMART logo lockup (approved landing design).
- *
- * The MDN mark (web/public/logo-mdn.png — the supplied company logo) is the dominant wordmark;
- * "STACKMART" sits after a hairline divider as the smaller platform name. This replaces the old
- * text-only "STACKMART" logo and is the single logo used in BOTH the header and the footer.
- *
- * `variant="light"` renders the mark white for dark navy surfaces (the mark is a solid navy
- * silhouette, so `brightness-0 invert` flips it to pure white — same asset, no second file).
- * Server-safe: no hooks.
+ * MDN STACKMART lockup: the `logo-mdn.png` wordmark + "STACKMART" after a hairline divider, used in
+ * the header and footer. `variant="light"` inverts the navy mark to white for dark surfaces
+ * (`brightness-0 invert` — same asset, no second file). No hooks.
  */
 export function Logo({
   variant = "navy",

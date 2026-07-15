@@ -362,6 +362,30 @@
     mask-image: radial-gradient(115% 130% at 100% 0%, black, transparent 68%);
   }
 
+  /* Keeps the marketplace code motif (MarketplaceBackdrop) in the OUTER page margins and fades it to
+     zero across the entire central column — the same horizontal mask /sell uses, so no code ever
+     renders beneath the sidebar, a card or any label. */
+  .mkt-codewrap {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      black 0%,
+      black 6%,
+      transparent 18%,
+      transparent 82%,
+      black 94%,
+      black 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      black 0%,
+      black 6%,
+      transparent 18%,
+      transparent 82%,
+      black 94%,
+      black 100%
+    );
+  }
+
   /* Hero headline gradient — royal blue → violet tint, clipped to the glyphs.
      `-webkit-text-fill-color` is required alongside `color` for WebKit/Safari. */
   .text-gradient-accent {
@@ -495,6 +519,12 @@
     background-size: 32px 32px;
   }
 
+  /* Mobile Sell wizard: the pinned bottom nav bar's upward elevation (navy-tinted, token-derived) so
+     the "Next" action reads as a raised, intentional footer over the scrolling form. */
+  .sell-mobile-nav {
+    box-shadow: 0 -10px 30px -14px color-mix(in srgb, var(--primary) 26%, transparent);
+  }
+
   /* Mobile Sell wizard: guarantee ≥44px tap targets for every text control, WITHOUT altering the
      shared control tokens — so the desktop form is byte-for-byte unchanged. Gated at <768px (below
      `md`) and scoped to `.sell-form`, this can never reach desktop or any other form. Checkboxes,
@@ -569,6 +599,19 @@
       linear-gradient(color-mix(in srgb, var(--canvas) 5%, transparent) 1px, transparent 1px),
       linear-gradient(90deg, color-mix(in srgb, var(--canvas) 5%, transparent) 1px, transparent 1px);
     background-size: 34px 34px;
+  }
+
+  /* Account pages — MOBILE ONLY (<768px, below `md`): a guaranteed ≥44px tap target on every control
+     and primary action. Scoped to the media query AND the `.account-fx` scope, so the desktop
+     /account layout is byte-for-byte unchanged and no other page is touched. (The old lavender header
+     wash that lived here is superseded by the shared MobilePageHeader navy band.) */
+  @media (max-width: 767px) {
+    .account-fx input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    .account-fx select,
+    .account-fx textarea,
+    .account-fx button[type="submit"] {
+      min-height: 44px;
+    }
   }
 
   /* Seller CTA: deep navy mesh. */

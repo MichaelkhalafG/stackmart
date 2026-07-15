@@ -16,6 +16,7 @@ import {
 
 import { GuidelinesFaq } from "@/components/guidelines/GuidelinesFaq";
 import { GuidelinesSwitch } from "@/components/guidelines/GuidelinesSwitch";
+import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 const GUIDELINES_DESCRIPTION =
@@ -195,10 +196,24 @@ function StepGrid({ steps }: { steps: Step[] }) {
 export default function GuidelinesPage() {
   return (
     <>
+      {/* MOBILE (<md): the shared branded navy header band, with the commission chip kept. */}
+      <MobilePageHeader
+        command="mdn docs --guidelines"
+        title="How MDN STACKMART works"
+        subhead="How buying and selling vetted micro-SaaS works here — for both buyers and sellers."
+        extra={
+          <span className="mono inline-flex items-center gap-2 rounded-md border border-tag-bg/25 bg-tag-bg/10 px-3 py-1.5 text-[12px] text-tag-bg">
+            <span className="anim-pulse-dot size-1.5 rounded-full bg-tag-bg" aria-hidden />
+            flat 20% commission · no listing fee
+          </span>
+        }
+      />
+
       {/* ── Header — the branded dark navy band (same treatment as the landing's dark sections:
              `.mesh-sell` navy + royal-blue gradient mesh, with the `.grid-motif-sell` striped
-             coding grid on top). Only the header is dark; every section below stays light. ── */}
-      <section className="mesh-sell relative overflow-hidden">
+             coding grid on top). Only the header is dark; every section below stays light.
+             DESKTOP ONLY (md+) — mobile uses the shared MobilePageHeader band above. ── */}
+      <section className="mesh-sell relative hidden overflow-hidden md:block">
         <div className="grid-motif-sell absolute inset-0" aria-hidden />
 
         <div className="relative container-page py-10 md:py-[clamp(64px,8vw,104px)]">

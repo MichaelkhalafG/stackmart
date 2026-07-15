@@ -12,12 +12,18 @@ import { SellBackdrop } from "@/components/sell/SellBackdrop";
  * Living in the layout (not the page) means the backdrop is also present for `loading.tsx`, so the
  * page doesn't flash a plain white background before the form appears. Container width and padding
  * are unchanged.
+ *
+ * OVERFLOW: from `md` up, clip only X (`overflow-x-clip`, not `hidden`) and leave Y visible —
+ * `overflow:hidden` makes a scroll container that kills the desktop rail's `position:sticky`; `clip`
+ * doesn't. Below `md` (no sticky rail) it keeps plain `overflow-hidden`.
  */
 export default function SellSectionLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="sell-base relative overflow-hidden">
+    <div className="sell-base relative overflow-hidden md:overflow-x-clip md:overflow-y-visible">
       <SellBackdrop />
-      <Container className="relative py-6">{children}</Container>
+      {/* `max-md:pb-0`: the mobile form supplies its own `mb-24` clearance for the fixed bottom nav,
+          so the container's default bottom padding just stacked dead space beneath it. */}
+      <Container className="relative py-6 max-md:pt-0 max-md:pb-0">{children}</Container>
     </div>
   );
 }

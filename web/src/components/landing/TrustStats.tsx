@@ -1,12 +1,8 @@
 import { Eye, Lock, ShieldCheck } from "lucide-react";
 
 /**
- * Trust / stats band — approved landing design.
- *
- * TODO: wire to real metrics post-launch.
- *
- * These are marketing numbers and are intentionally STATIC for now. They live in the two constants
- * below so they are trivial to edit (or swap for a server fetch) later without touching the markup.
+ * Trust/stats band. Static marketing numbers.
+ * TODO: real metrics.
  */
 const STATS = [
   { value: "$2.4M", label: "in deals closed" },
@@ -23,10 +19,7 @@ const TRUST_MARKS = [
 
 export function TrustStats() {
   return (
-    // MOBILE: hidden. The hero's own trust line already carries $2.4M / 180 / 12k+ on a phone, so
-    // this band was the same numbers a second time, one scroll later. Desktop keeps it — there the
-    // hero shows the figures inline in a single row and the band still earns its place as a
-    // full-width proof section (plus the three trust marks, which the hero does not carry).
+    // hidden on mobile — the hero's trust line already shows these figures; desktop keeps the band.
     <section className="mesh-stats border-y border-border max-md:hidden">
       <div className="container-page py-[clamp(48px,6vw,80px)]">
         {/* Phones (<sm): a tight 2×2 grid inside ONE bordered card, so the four figures read as a

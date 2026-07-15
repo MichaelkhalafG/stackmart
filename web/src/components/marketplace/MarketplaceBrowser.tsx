@@ -17,6 +17,7 @@ import { FilterSidebar } from "./FilterSidebar";
 import { MarketplacePagination, type PaginationMeta } from "./MarketplacePagination";
 import { MarketplaceSearch } from "./MarketplaceSearch";
 import { MobileMarketplaceControls } from "./MobileMarketplaceControls";
+import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 import { ProductGridSkeleton } from "./ProductGridSkeleton";
 import { SORT_OPTIONS, SortSelect, type SortValue } from "./SortSelect";
 
@@ -153,16 +154,9 @@ export function MarketplaceBrowser() {
     }
   }, [meta, page, onPage]);
 
-  // Return the user to the top of the RESULTS whenever the result set changes from an action —
-  // paging, sorting, searching, or any filter apply/clear (incl. from the mobile drawer). Without
-  // this, `router.replace(..., { scroll: false })` leaves them scrolled down by the pagination and
-  // the new products load out of view above them.
-  //
-  // Keyed on the user-facing query signature, so it fires exactly on those changes and is skipped on
-  // the initial mount / a deep-linked URL. `per_page` is deliberately excluded — it changes on
-  // viewport resize (4↔12), which must NOT yank the scroll. We scroll the results section (not the
-  // document top) so the branded page header isn't re-read every time; `scroll-mt` clears the sticky
-  // header. Reduced-motion gets an instant jump instead of a smooth scroll.
+  // Scroll to the top of the results on any query change (page/sort/search/filter) — with
+  // `scroll: false` on the URL update the user would otherwise stay parked at the pager. Keyed on the
+  // user-facing signature (excludes per_page, which flips on resize); skips initial mount / deep links.
   const resultsRef = useRef<HTMLElement>(null);
   const scrollToResults = useCallback(() => {
     const el = resultsRef.current;
@@ -180,10 +174,24 @@ export function MarketplaceBrowser() {
   }, [contentKey, scrollToResults]);
 
   return (
-    <div className="py-2">
-      {/* Branded section header — the same coding language as the landing: a subtle canvas mesh
-          under a faint navy grid, a mono "terminal" line, the navy heading, and a live mono count. */}
-      <header className="mesh-categories relative mb-6 overflow-hidden rounded-2xl border border-border px-5 py-6 sm:px-8 sm:py-8">
+    <div className="py-2 max-md:pt-0">
+      {/* MOBILE (<md): the shared branded navy header band, carrying the live listing count. */}
+      <MobilePageHeader
+        command="mdn browse --vetted"
+        title="Marketplace"
+        subhead="Browse vetted micro-SaaS products, web apps, and codebases."
+        extra={
+          meta ? (
+            <p className="mono text-[13px] text-tag-bg/85">
+              <span className="font-semibold text-canvas">{meta.total}</span> listing
+              {meta.total === 1 ? "" : "s"} available
+            </p>
+          ) : null
+        }
+      />
+
+      {/* DESKTOP (md+): the existing branded canvas-mesh header, unchanged. */}
+      <header className="mesh-categories relative mb-6 hidden overflow-hidden rounded-2xl border border-border px-5 py-6 sm:px-8 sm:py-8 md:block">
         <div className="mkt-grid absolute inset-0" aria-hidden />
         <div className="relative">
           <div className="mono mb-2 flex items-center gap-2 text-[12.5px] text-accent">
@@ -206,7 +214,7 @@ export function MarketplaceBrowser() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[248px_1fr]">
+      <div className="grid grid-cols-1 gap-8 max-md:mt-6 lg:grid-cols-[248px_1fr]">
         <FilterSidebar
           categories={categories}
           category={category}

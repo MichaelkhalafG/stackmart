@@ -425,6 +425,7 @@ export default function TermsPage() {
   return (
     <LegalShell
       eyebrow="Legal"
+      command="mdn legal --terms"
       title="Terms &"
       titleAccent="conditions."
       lead="The rules of the marketplace, in plain English: what you get when you buy, what you promise when you sell, and what we do in between. No padding, no small print you are meant to miss."

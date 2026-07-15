@@ -297,7 +297,9 @@ function CentsHint({ value }: { value: string }) {
 /** The sticky rail: the sections, the current one washed in lavender (reference §02). */
 function ProgressRail({ active, onJump }: { active: number; onJump: (index: number) => void }) {
   return (
-    <aside className="sticky top-20 hidden rounded-[10px] border border-border bg-canvas p-[22px] lg:block">
+    <aside className="sticky top-20 hidden flex-col gap-4 lg:flex">
+      {/* Progress card. */}
+      <div className="rounded-[10px] border border-border bg-canvas p-[22px]">
       <p className="mono mb-4 text-[11px] tracking-[0.1em] text-fg-muted uppercase">Progress</p>
 
       <nav aria-label="Form sections" className="flex flex-col gap-0.5">
@@ -342,6 +344,39 @@ function ProgressRail({ active, onJump }: { active: number; onJump: (index: numb
         <Info className="mt-px size-[15px] flex-none text-accent" strokeWidth={2.2} aria-hidden />
         Listings stay hidden until our team has reviewed your code and verified your revenue.
       </p>
+      </div>
+
+      {/* Decorative navy terminal motif under the rail (`.panel-navy` + `.motif-grid`). Cursor uses
+          `anim-blink` (off under reduced-motion). Lines are short enough not to wrap the 260px rail. */}
+      <div
+        aria-hidden
+        className="panel-navy relative overflow-hidden rounded-[10px] border border-tag-bg/20 px-[18px] py-4"
+      >
+        <div className="motif-grid absolute inset-0" />
+        <div className="mono relative text-[12.5px] leading-[1.85] whitespace-pre">
+          <div className="text-tag-bg/55">{"// how a listing goes live"}</div>
+          <div className="text-canvas">
+            <span className="text-tag-bg">submit</span>
+            {"  = code, docs, shots"}
+          </div>
+          <div className="text-canvas">
+            <span className="text-tag-bg">review</span>
+            {"  = our team reads it"}
+          </div>
+          <div className="text-canvas">
+            <span className="text-tag-bg">approve</span>
+            {" = it goes public"}
+          </div>
+          <div className="text-canvas">
+            <span className="text-tag-bg">payout</span>
+            {"  = sale − 20% → you"}
+          </div>
+          <div className="mt-1 text-canvas">
+            await sm.review()
+            <span className="anim-blink ml-0.5 inline-block h-3 w-1.5 -translate-y-px bg-tag-bg align-middle" />
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
@@ -742,23 +777,24 @@ export function SellForm() {
 
           mutation.mutate();
         }}
-        className="sell-form mb-24 overflow-hidden rounded-[10px] border border-border bg-canvas md:mb-0"
+        className="sell-form overflow-hidden rounded-[10px] border border-border bg-canvas max-md:-mx-4 max-md:overflow-visible max-md:rounded-none max-md:border-x-0"
       >
-        {/* ── Mobile wizard progress strip (step counter + segmented bar). <768px only. ────────
-            Desktop keeps its sticky ProgressRail to the side; this never renders there (`md:hidden`).
-            The section's own numbered "01 The basics" header supplies the step title just below. */}
+        {/* Mobile wizard progress strip — step counter + bar (<768px). Desktop uses ProgressRail
+            instead (`md:hidden`). */}
         <div
           ref={headerRef}
-          className="scroll-mt-2 flex flex-col gap-3 border-b border-border bg-canvas-subtle px-6 py-4 md:hidden"
+          className="sticky top-16 z-30 flex scroll-mt-16 flex-col gap-3 border-b border-border bg-canvas/95 px-5 py-3.5 backdrop-blur-sm md:hidden"
         >
           <div className="flex items-center justify-between gap-3">
-            <p className="mono text-[11px] tracking-[0.12em] text-fg-muted uppercase">
-              Step <span className="text-accent">{String(step + 1).padStart(2, "0")}</span>
-              <span className="text-fg-muted/60"> / {String(STEPS.length).padStart(2, "0")}</span>
-              <span className="ml-2 font-semibold text-primary normal-case tracking-normal">
+            <div className="flex min-w-0 items-baseline gap-2.5">
+              <span className="mono flex-none text-[13px] font-semibold text-accent">
+                {String(step + 1).padStart(2, "0")}
+                <span className="text-fg-muted/60"> / {String(STEPS.length).padStart(2, "0")}</span>
+              </span>
+              <span className="truncate text-[15px] font-bold text-primary">
                 {STEPS[step].title}
               </span>
-            </p>
+            </div>
             <button
               type="button"
               onClick={clearForm}
@@ -768,16 +804,12 @@ export function SellForm() {
             </button>
           </div>
 
-          <div className="flex gap-1.5" aria-hidden>
-            {STEPS.map((section, index) => (
-              <span
-                key={section.id}
-                className={cn(
-                  "h-1.5 flex-1 rounded-full transition-colors",
-                  index <= step ? "bg-accent" : "bg-border",
-                )}
-              />
-            ))}
+          {/* Progress bar — fills to the current step. */}
+          <div className="h-1.5 overflow-hidden rounded-full bg-border" aria-hidden>
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
+              style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -785,7 +817,7 @@ export function SellForm() {
           <div
             id="sell-errors"
             tabIndex={-1}
-            className="flex scroll-mt-24 flex-col gap-4 border-b border-border p-6 outline-none sm:p-8 lg:px-10 lg:pt-10"
+            className="flex scroll-mt-24 flex-col gap-4 border-b border-border px-5 py-6 outline-none sm:p-8 lg:px-10 lg:pt-10"
           >
             {generalError ? (
               <Alert variant="error" title="We couldn't send your submission">
@@ -800,7 +832,7 @@ export function SellForm() {
         <div
           id={STEPS[0].id}
           onFocusCapture={() => setActive(0)}
-          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 0 && "hidden md:block")}
+          className={cn("scroll-mt-24 px-5 py-6 sm:p-8 lg:p-10", step !== 0 && "hidden md:block")}
         >
           <FormSection step={STEPS[0].step} title={STEPS[0].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
@@ -919,7 +951,7 @@ export function SellForm() {
         <div
           id={STEPS[1].id}
           onFocusCapture={() => setActive(1)}
-          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 1 && "hidden md:block")}
+          className={cn("scroll-mt-24 px-5 py-6 sm:p-8 lg:p-10", step !== 1 && "hidden md:block")}
         >
           <FormSection step={STEPS[1].step} title={STEPS[1].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2">
@@ -1021,7 +1053,7 @@ export function SellForm() {
         <div
           id={STEPS[2].id}
           onFocusCapture={() => setActive(2)}
-          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 2 && "hidden md:block")}
+          className={cn("scroll-mt-24 px-5 py-6 sm:p-8 lg:p-10", step !== 2 && "hidden md:block")}
         >
           <FormSection step={STEPS[2].step} title={STEPS[2].title}>
             <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-3">
@@ -1113,7 +1145,7 @@ export function SellForm() {
         <div
           id={STEPS[3].id}
           onFocusCapture={() => setActive(3)}
-          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 3 && "hidden md:block")}
+          className={cn("scroll-mt-24 px-5 py-6 sm:p-8 lg:p-10", step !== 3 && "hidden md:block")}
         >
           <FormSection step={STEPS[3].step} title={STEPS[3].title}>
             <Alert variant="info" title="Your files stay private" className="mb-6">
@@ -1172,7 +1204,7 @@ export function SellForm() {
         <div
           id={STEPS[4].id}
           onFocusCapture={() => setActive(4)}
-          className={cn("scroll-mt-24 p-6 sm:p-8 lg:p-10", step !== 4 && "hidden md:block")}
+          className={cn("scroll-mt-24 px-5 py-6 sm:p-8 lg:p-10", step !== 4 && "hidden md:block")}
         >
           <FormSection step={STEPS[4].step} title={STEPS[4].title}>
             <p className="mb-5 flex items-start gap-2.5 text-[13px] leading-[1.5] text-fg-muted">
@@ -1344,9 +1376,7 @@ export function SellForm() {
           </FormSection>
         </div>
 
-        {/* ── footer bar ────────────────────────────────────────────────────── */}
-        {/* Action row: full-width, 44px-tall buttons stacked on phones; the design's justified row
-            from sm up. */}
+        {/* Desktop action row — stacked full-width buttons on phones, justified row from sm up. */}
         <div className="hidden flex-col items-stretch gap-4 border-t border-border bg-canvas-subtle px-6 py-[22px] sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-8 md:flex lg:px-10">
           <span className="text-[13px] text-fg-muted">
             No account needed — our team replies by email.
@@ -1367,11 +1397,10 @@ export function SellForm() {
           </div>
         </div>
 
-        {/* ── Mobile wizard nav — pinned to the viewport bottom, always reachable. <768px only. ──
-            `fixed` is deliberate: none of the /sell ancestors set a transform, so it anchors to the
-            viewport (not the overflow-hidden card), and the form's `mb-24` gives the last field room
-            to clear it. Buttons stay inside <form>, so "Submit listing" submits normally. */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm md:hidden">
+        {/* Mobile wizard nav, pinned to the viewport bottom (<768px). `fixed` works because no /sell
+            ancestor sets a transform. No bottom spacer on the form: the Footer after it (SiteChrome)
+            provides the scroll clearance. Buttons stay inside <form> so submit works. */}
+        <div className="sell-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 px-4 pt-3.5 pb-[max(0.85rem,env(safe-area-inset-bottom))] backdrop-blur-sm md:hidden">
           <div className="mx-auto flex max-w-[540px] items-center gap-3">
             {step > 0 ? (
               <Button

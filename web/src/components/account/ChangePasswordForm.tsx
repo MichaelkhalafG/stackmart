@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Lock } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { Field } from "@/components/form/Field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,9 @@ const EMPTY: Record<PasswordFieldName, string> = {
 export function ChangePasswordForm() {
   const [values, setValues] = useState(EMPTY);
   const [clientErrors, setClientErrors] = useState<Partial<Record<PasswordFieldName, string>>>({});
+  // Mobile-only disclosure — collapsed by default (<md), always-open on desktop via `md:flex`.
+  const [open, setOpen] = useState(false);
+  const bodyId = useId();
   const { toast } = useToast();
 
   const validators: Record<PasswordFieldName, (value: string) => string | undefined> = {
@@ -102,13 +106,44 @@ export function ChangePasswordForm() {
   }
 
   return (
-    <section className="rounded-xl border border-border bg-canvas p-6 sm:p-7">
-      <h2 className="text-[15px] font-bold text-primary">Password</h2>
-      <p className="mt-1 text-[13px] leading-[1.5] text-fg-muted">
+    <section className="rounded-xl border border-l-2 border-border border-l-accent bg-canvas p-6 shadow-sm sm:p-7">
+      <h2 className="m-0">
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          className="flex min-h-[44px] w-full items-center gap-3 text-left md:pointer-events-none md:min-h-0"
+        >
+          <span
+            aria-hidden
+            className="flex size-9 flex-none items-center justify-center rounded-lg bg-tag-bg text-accent"
+          >
+            <Lock className="size-[17px]" strokeWidth={2} />
+          </span>
+          <span className="flex-1 text-[15px] font-bold text-primary">Password</span>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-5 flex-none text-fg-muted transition-transform duration-200 motion-reduce:transition-none md:hidden",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </h2>
+      <p className="mt-1.5 pl-12 text-[13px] leading-[1.5] text-fg-muted">
         Changing your password signs you out on every other device. You stay signed in here.
       </p>
 
-      <form noValidate onSubmit={handleSubmit} className="mt-5 flex flex-col gap-4">
+      <form
+        id={bodyId}
+        noValidate
+        onSubmit={handleSubmit}
+        className={cn(
+          "mt-5 flex-col gap-4 border-t border-border pt-5 md:flex",
+          open ? "flex" : "hidden",
+        )}
+      >
         {generalError ? <Alert variant="error">{generalError}</Alert> : null}
 
         {mutation.isSuccess ? (

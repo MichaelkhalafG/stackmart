@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { SellForm } from "@/components/sell/SellForm";
+import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
 const SELL_DESCRIPTION =
@@ -37,18 +38,21 @@ export const metadata: Metadata = {
  */
 export default function SellPage() {
   return (
-    <div className="container-page py-10 sm:py-14">
-      <header className="mb-6 sm:mb-9">
+    <div className="container-page py-10 max-md:px-0 max-md:pt-0 max-md:pb-0 sm:py-14">
+      {/* MOBILE (<md): the shared branded navy coding-motif header band. */}
+      <MobilePageHeader
+        command="mdn submit --listing"
+        title="Submit a listing"
+        subhead="Submit your project for review — we vet every one and reply by email. No account · flat 20% commission when it sells."
+      />
+
+      {/* DESKTOP (md+): the reference header, unchanged. */}
+      <header className="mb-6 hidden sm:mb-9 md:block">
         <p className="mono mb-2 text-[11px] tracking-[0.1em] text-accent uppercase">Sell</p>
         <h1 className="text-[clamp(1.5rem,3vw,2rem)] font-bold tracking-[-0.01em] text-primary">
           Submit a listing
         </h1>
-        {/* Compact lead on phones so the form is reached fast; the full pitch shows from md up. */}
-        <p className="mt-2.5 text-[15px] leading-[1.5] text-fg-muted md:hidden">
-          Submit your project for review — we vet every one and follow up by email. No account
-          needed · flat 20% commission when it sells.
-        </p>
-        <p className="mt-2.5 hidden max-w-[64ch] text-base leading-[1.5] text-fg-muted md:block">
+        <p className="mt-2.5 max-w-[64ch] text-base leading-[1.5] text-fg-muted">
           Submit your micro-SaaS, web app, or codebase for review. Attach the code, a short
           verification README and a few screenshots — the MDN STACKMART team vets every submission
           and follows up by email. No account needed. Flat 20% commission when it sells.
