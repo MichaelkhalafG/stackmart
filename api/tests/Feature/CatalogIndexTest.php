@@ -65,7 +65,7 @@ it('filters by inclusive min_price and max_price', function () {
     expect($this->getJson('/api/products?min_price=500000&max_price=500000')->assertOk()->json('meta.total'))->toBe(1);
 });
 
-it('searches title and tagline via FULLTEXT (presence + absence, not rank)', function () {
+it('searches title and tagline (presence + absence)', function () {
     $cat = Category::factory()->create();
     Product::factory()->published()->create([
         'category_id' => $cat->id, 'title' => 'Quantum Ledger', 'slug' => 'quantum-ledger',
@@ -80,6 +80,57 @@ it('searches title and tagline via FULLTEXT (presence + absence, not rank)', fun
 
     expect($slugs)->toContain('quantum-ledger');
     expect($slugs)->not->toContain('zephyr-mailer');
+});
+
+it('matches partial words, case-insensitively, in title and tagline (substring search)', function () {
+    $cat = Category::factory()->create();
+    Product::factory()->published()->create([
+        'category_id' => $cat->id, 'title' => 'LaunchBase', 'slug' => 'launchbase',
+        'tagline' => 'Ship your startup faster',
+    ]);
+    Product::factory()->published()->create([
+        'category_id' => $cat->id, 'title' => 'CartSpark', 'slug' => 'cartspark',
+        'tagline' => 'Headless checkout for stores',
+    ]);
+
+    // Partial token inside a title ("launch" ⊂ "LaunchBase") — the case FULLTEXT could not match.
+    $byTitle = collect($this->getJson('/api/products?search=launch')->assertOk()->json('data'))->pluck('slug');
+    expect($byTitle)->toContain('launchbase')->not->toContain('cartspark');
+
+    // Case-insensitive, and matching a word from the tagline.
+    $byTagline = collect($this->getJson('/api/products?search=CHECKOUT')->assertOk()->json('data'))->pluck('slug');
+    expect($byTagline)->toContain('cartspark')->not->toContain('launchbase');
+});
+
+it('ANDs multiple search terms across title + tagline', function () {
+    $cat = Category::factory()->create();
+    Product::factory()->published()->create([
+        'category_id' => $cat->id, 'title' => 'CartSpark', 'slug' => 'cartspark',
+        'tagline' => 'Headless checkout for stores',
+    ]);
+    Product::factory()->published()->create([
+        'category_id' => $cat->id, 'title' => 'PayFlow', 'slug' => 'payflow',
+        'tagline' => 'Subscription billing engine',
+    ]);
+
+    // Both terms must be present (title OR tagline) — only CartSpark has "cart" AND "checkout".
+    $slugs = collect($this->getJson('/api/products?search=cart+checkout')->assertOk()->json('data'))->pluck('slug');
+    expect($slugs)->toContain('cartspark')->not->toContain('payflow');
+});
+
+it('honours a bounded per_page, defaulting to 12', function () {
+    $cat = Category::factory()->create();
+    Product::factory()->published()->count(5)->create(['category_id' => $cat->id]);
+
+    $res = $this->getJson('/api/products?per_page=4')->assertOk();
+    expect($res->json('data'))->toHaveCount(4);
+    expect($res->json('meta.per_page'))->toBe(4);
+    expect($res->json('meta.last_page'))->toBe(2);
+    expect($res->json('meta.total'))->toBe(5);
+
+    // Out of range → 422 (min:1, max:48).
+    $this->getJson('/api/products?per_page=0')->assertStatus(422);
+    $this->getJson('/api/products?per_page=100')->assertStatus(422);
 });
 
 it('sorts by price ascending and descending', function () {

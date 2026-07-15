@@ -31,6 +31,7 @@ class ProductIndexRequest extends FormRequest
             'max_price' => ['nullable', 'integer', 'min:0'],
             'sort' => ['nullable', 'string', 'in:newest,price_asc,price_desc'],
             'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:48'],
         ];
     }
 }

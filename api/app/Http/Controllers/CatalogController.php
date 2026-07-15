@@ -33,8 +33,24 @@ class CatalogController extends Controller
             ->where('status', Product::STATUS_PUBLISHED);
 
         if (! empty($filters['search'])) {
-            // MySQL/MariaDB FULLTEXT: MATCH(title, tagline) AGAINST(? IN NATURAL LANGUAGE MODE).
-            $query->whereFullText(['title', 'tagline'], $filters['search']);
+            // Substring search across title + tagline, term-by-term (AND).
+            //
+            // This replaces a FULLTEXT MATCH ... AGAINST (NATURAL LANGUAGE) query. Natural-language
+            // FULLTEXT only matches WHOLE tokens of at least the engine's minimum length (3–4 chars)
+            // and does no prefix/substring matching — so "launch" never matched "LaunchBase", "cart"
+            // never matched "CartSpark", and short terms like "AI" matched nothing at all. A search
+            // box implies as-you-type substring matching, so we use a tokenised, case-insensitive LIKE
+            // (the default utf8mb4 collation is case-insensitive). At catalogue scale this is both
+            // correct and fast; the FULLTEXT index on (title, tagline) is left in place but unused.
+            $terms = preg_split('/\s+/', trim($filters['search']), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+            $query->where(function ($outer) use ($terms) {
+                foreach ($terms as $term) {
+                    // Escape LIKE wildcards so a literal % or _ in the query isn't treated as one.
+                    $like = '%'.addcslashes($term, '%_\\').'%';
+                    $outer->where(fn ($q) => $q->where('title', 'like', $like)
+                        ->orWhere('tagline', 'like', $like));
+                }
+            });
         }
 
         if (! empty($filters['category'])) {
@@ -61,7 +77,10 @@ class CatalogController extends Controller
             default => $query->orderByDesc('published_at')->orderByDesc('id'),
         };
 
-        $products = $query->paginate(12)->withQueryString();
+        // Page size is client-driven so mobile can request a smaller page (4) than desktop (12),
+        // but stays bounded and defaults to the contract's 12 for a bare request.
+        $perPage = (int) ($filters['per_page'] ?? 12);
+        $products = $query->paginate($perPage)->withQueryString();
 
         return response()->json([
             'data' => collect($products->items())->map(fn (Product $product): array => [
