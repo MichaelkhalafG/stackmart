@@ -27,6 +27,13 @@ return [
     // Config-cache-safe (never read env() directly in provider code).
     'frontend_url' => env('FRONTEND_URL'),
 
+    // DEMO ESCAPE HATCH (reversible). FakePaymentProvider hard-fails under app()->isProduction()
+    // by default, so a fake gateway can never silently stand in for a real one at launch. For a
+    // live DEMO deploy (no real gateway chosen yet) set ALLOW_FAKE_PAYMENTS_IN_PROD=true to lift
+    // that guard so the simulated success flow runs. Real production leaves this false/unset and
+    // binds a real PaymentProvider (PAYMENT_PROVIDER) before launch. Do NOT delete the guard.
+    'allow_fake_in_production' => (bool) env('ALLOW_FAKE_PAYMENTS_IN_PROD', false),
+
     /*
     |--------------------------------------------------------------------------
     | Platform Commission (DR-8)

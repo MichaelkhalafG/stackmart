@@ -55,13 +55,20 @@ final class FakePaymentProvider implements PaymentProvider
 
     /**
      * A fake gateway must NEVER silently stand in for a real one at launch.
+     *
+     * DEMO ESCAPE HATCH (reversible): when ALLOW_FAKE_PAYMENTS_IN_PROD=true (config
+     * payments.allow_fake_in_production) the production guard is lifted so the simulated success
+     * flow works on a live demo deploy. Left unset/false, the guard still hard-fails in production
+     * — real launch must bind a real PaymentProvider. Flip the flag off to restore full protection;
+     * do not remove this guard.
      */
     private function assertNotProduction(): void
     {
-        if (app()->isProduction()) {
+        if (app()->isProduction() && ! config('payments.allow_fake_in_production')) {
             throw new RuntimeException(
                 'FakePaymentProvider must not run in production — bind a real PaymentProvider '
-                . '(set PAYMENT_PROVIDER + credentials) before launch.'
+                . '(set PAYMENT_PROVIDER + credentials) before launch, or set '
+                . 'ALLOW_FAKE_PAYMENTS_IN_PROD=true to explicitly allow the fake flow for a demo.'
             );
         }
     }
