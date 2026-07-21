@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { SHOW_SELL } from "@/lib/config";
 
 /**
  * The Guidelines FAQ — the shadcn `Accordion` (Base UI) used AS-IS, exactly like the listing-page
@@ -19,17 +20,26 @@ import {
  * product per order (no cart), ZIP + license key on confirmed payment, sellers submit via /sell with
  * no account. No payment gateway is named anywhere — that is a pending business decision and naming
  * one outside `app/Payments/` is a rule violation.
+ *
+ * BUYER-ONLY MODE (SHOW_SELL=false): the seller set is dropped entirely, and the buyer answers that
+ * refer to "the seller" fall back to `aBuyerOnly` — same facts, worded without the other side.
  */
-type Faq = { q: string; a: string };
+type Faq = { q: string; a: string; aBuyerOnly?: string };
+
+const answerOf = (entry: Faq) => (!SHOW_SELL && entry.aBuyerOnly ? entry.aBuyerOnly : entry.a);
 
 const BUYER_FAQ: Faq[] = [
   {
     q: "Is every listing really vetted?",
     a: "Yes. MDN STACKMART is admin-curated — nothing self-publishes. Our team reviews each submission against the code, the README the seller provides, the live demo, and the stated metrics before a listing goes live. If we cannot verify a claim, it does not get published.",
+    aBuyerOnly:
+      "Yes. MDN STACKMART is admin-curated — nothing self-publishes. Our team reviews every product against the code, the accompanying README, the live demo, and the stated metrics before a listing goes live. If we cannot verify a claim, it does not get published.",
   },
   {
     q: "What exactly do I receive when I buy?",
     a: "Two things, immediately on confirmed payment: a license key and the deliverable ZIP containing the product's source code and whatever the seller packaged with it (setup instructions, assets, configuration). Both are emailed to you and both stay available from your Purchases page.",
+    aBuyerOnly:
+      "Two things, immediately on confirmed payment: a license key and the deliverable ZIP containing the product's source code and everything packaged with it (setup instructions, assets, configuration). Both are emailed to you and both stay available from your Purchases page.",
   },
   {
     q: "How do I download my purchase?",
@@ -46,6 +56,8 @@ const BUYER_FAQ: Faq[] = [
   {
     q: "What rights do I get over the code?",
     a: "You acquire the product to own, run, modify, and grow as your own. The listing page states the scope of what transfers with each sale — source code, and any assets or accounts the seller has explicitly included. Anything not listed does not transfer, so read the listing before you buy.",
+    aBuyerOnly:
+      "You acquire the product to own, run, modify, and grow as your own. The listing page states the scope of what transfers with each purchase — source code, and any assets or accounts explicitly included with it. Anything not listed does not transfer, so read the listing before you buy.",
   },
   {
     q: "Do you offer refunds?",
@@ -54,6 +66,8 @@ const BUYER_FAQ: Faq[] = [
   {
     q: "How can I evaluate a product before I commit?",
     a: "Every listing shows the metrics and tech stack the seller supplied and that we reviewed, and links out to a live demo and the repository where the seller has provided them. Open both. They are plain external links to the seller's own hosting — we neither embed the demo nor pull anything from a Git provider.",
+    aBuyerOnly:
+      "Every listing shows the metrics and tech stack our team reviewed, and links out to a live demo and the repository wherever those exist. Open both. They are plain external links to the product's own hosting — we neither embed the demo nor pull anything from a Git provider.",
   },
 ];
 
@@ -96,12 +110,15 @@ const SELLER_FAQ: Faq[] = [
   },
 ];
 
-function FaqGroup({ id, title, items }: { id: string; title: string; items: Faq[] }) {
+function FaqGroup({ id, title, items }: { id: string; title?: string; items: Faq[] }) {
   return (
     <div>
-      <h3 className="mono mb-3 text-[12px] font-semibold tracking-[0.1em] text-accent uppercase">
-        {title}
-      </h3>
+      {/* No group label in buyer-only mode — there is only one set, so "For buyers" is noise. */}
+      {title ? (
+        <h3 className="mono mb-3 text-[12px] font-semibold tracking-[0.1em] text-accent uppercase">
+          {title}
+        </h3>
+      ) : null}
       <Accordion className="rounded-[10px] border border-border bg-canvas px-5">
         {items.map((entry, index) => (
           <AccordionItem key={entry.q} value={`${id}-${index}`}>
@@ -109,7 +126,9 @@ function FaqGroup({ id, title, items }: { id: string; title: string; items: Faq[
               {entry.q}
             </AccordionTrigger>
             <AccordionContent>
-              <p className="pr-6 pb-1 text-[15px] leading-[1.6] text-fg-muted">{entry.a}</p>
+              <p className="pr-6 pb-1 text-[15px] leading-[1.6] text-fg-muted">
+                {answerOf(entry)}
+              </p>
             </AccordionContent>
           </AccordionItem>
         ))}
@@ -119,6 +138,15 @@ function FaqGroup({ id, title, items }: { id: string; title: string; items: Faq[
 }
 
 export function GuidelinesFaq() {
+  // Buyer-only mode: one set, one column, centred on the same measure the rest of the band uses.
+  if (!SHOW_SELL) {
+    return (
+      <div className="mx-auto max-w-[760px]">
+        <FaqGroup id="buyers" items={BUYER_FAQ} />
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 md:gap-8 lg:grid-cols-2 lg:gap-7">
       <FaqGroup id="buyers" title="For buyers" items={BUYER_FAQ} />

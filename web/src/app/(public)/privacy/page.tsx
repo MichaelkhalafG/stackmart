@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SHOW_SELL } from "@/lib/config";
 import {
   LEGAL_CONTACT_EMAIL,
   LegalCallout,
@@ -10,8 +11,9 @@ import {
 } from "@/components/legal/LegalShell";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
-const PRIVACY_DESCRIPTION =
-  "How MDN STACKMART handles your data — what we collect from buyers and sellers, why, how payout details and uploaded files are protected, the emails we send, and your rights over any of it. We do not sell personal data.";
+const PRIVACY_DESCRIPTION = SHOW_SELL
+  ? "How MDN STACKMART handles your data — what we collect from buyers and sellers, why, how payout details and uploaded files are protected, the emails we send, and your rights over any of it. We do not sell personal data."
+  : "How MDN STACKMART handles your data — what we collect when you buy, why, how your account and order records are protected, the emails we send, and your rights over any of it. We do not sell personal data.";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -46,6 +48,11 @@ const LAST_UPDATED = "14 July 2026";
  * by design, an auth token in the browser to keep you signed in) — it is not boilerplate. Layout is
  * shared with /terms via `<LegalShell>`.
  *
+ * BUYER-ONLY MODE (SHOW_SELL=false): the two submission-side sections (payout details, uploaded
+ * files) drop out of the array — and so out of the table of contents, which renumbers itself — and
+ * the mixed sections render a buyer-only variant. The "we do not sell your data" section stays: it
+ * is about data brokerage, not about the marketplace's selling side. Nothing is deleted.
+ *
  * NOTE: the payment gateway is a pending business decision (CLAUDE.md), so this document refers to
  * "our payment provider" and never names one.
  */
@@ -55,14 +62,24 @@ const SECTIONS: LegalSectionContent[] = [
     title: "What this policy covers",
     body: (
       <>
+        {SHOW_SELL ? (
+          <p>
+            This explains what MDN STACKMART does with personal data — yours as a buyer, and yours as
+            a seller. It covers the whole site: browsing, buying, downloading, and submitting a
+            project through the <Link href="/sell">seller form</Link>.
+          </p>
+        ) : (
+          <p>
+            This explains what MDN STACKMART does with your personal data. It covers the whole site:
+            browsing, buying, and downloading what you bought.
+          </p>
+        )}
         <p>
-          This explains what MDN STACKMART does with personal data — yours as a buyer, and yours as a
-          seller. It covers the whole site: browsing, buying, downloading, and submitting a project
-          through the <Link href="/sell">seller form</Link>.
-        </p>
-        <p>
-          The short version: we collect what we need to deliver purchases, verify listings, pay
-          sellers, and support both sides. We do not collect data to profile you, and{" "}
+          The short version: we collect what we need to{" "}
+          {SHOW_SELL
+            ? "deliver purchases, verify listings, pay sellers, and support both sides"
+            : "deliver your purchases, verify listings, and support you"}
+          . We do not collect data to profile you, and{" "}
           <strong>we do not sell personal data to anyone</strong>.
         </p>
       </>
@@ -74,7 +91,8 @@ const SECTIONS: LegalSectionContent[] = [
     body: (
       <>
         <p>
-          <strong>Account data (buyers).</strong> Your name, your email address, and a password. The
+          <strong>Account data{SHOW_SELL ? " (buyers)" : ""}.</strong> Your name, your email address,
+          and a password. The
           password is <strong>hashed</strong> — it is never stored in plain text, and nobody at MDN
           STACKMART can read it. If you forget it, we can only help you set a new one.
         </p>
@@ -88,14 +106,19 @@ const SECTIONS: LegalSectionContent[] = [
           <strong>Payment data.</strong> Your card details go to our payment provider, not to us. We
           store the outcome — paid or not, the amount, and a reference — never your card number.
         </p>
-        <p>
-          <strong>Seller submissions.</strong> Your contact details, everything you tell us about the
-          project (description, category, tech stack, metrics, demo and repository links), the files
-          you upload, and <strong>your payout details</strong>.
-        </p>
+        {SHOW_SELL ? (
+          <p>
+            <strong>Seller submissions.</strong> Your contact details, everything you tell us about
+            the project (description, category, tech stack, metrics, demo and repository links), the
+            files you upload, and <strong>your payout details</strong>.
+          </p>
+        ) : null}
       </>
     ),
   },
+  // ── Submission-side sections. Present only when the marketplace accepts submissions
+  //    (SHOW_SELL); in buyer-only mode they drop out and the document renumbers itself. ──
+  ...(!SHOW_SELL ? [] : [
   {
     id: "payout-details",
     title: "Payout details are treated as sensitive",
@@ -154,6 +177,7 @@ const SECTIONS: LegalSectionContent[] = [
       </>
     ),
   },
+  ]),
   {
     id: "why",
     title: "Why we process it",
@@ -170,13 +194,22 @@ const SECTIONS: LegalSectionContent[] = [
               <strong>To verify listings</strong> — read the code, follow the README, check the
               metrics, so that what we publish is true.
             </>,
-            <>
-              <strong>To pay sellers</strong> — transfer the 80% and send proof of it.
-            </>,
-            <>
-              <strong>To support both sides</strong> — answer questions, investigate a broken
-              delivery, resolve a dispute.
-            </>,
+            ...(SHOW_SELL
+              ? [
+                  <>
+                    <strong>To pay sellers</strong> — transfer the 80% and send proof of it.
+                  </>,
+                  <>
+                    <strong>To support both sides</strong> — answer questions, investigate a broken
+                    delivery, resolve a dispute.
+                  </>,
+                ]
+              : [
+                  <>
+                    <strong>To support you</strong> — answer questions, investigate a broken
+                    delivery, resolve a dispute.
+                  </>,
+                ]),
             <>
               <strong>To keep the marketplace safe and lawful</strong> — detect abuse of license keys
               or downloads, and meet our accounting and tax obligations.
@@ -207,11 +240,18 @@ const SECTIONS: LegalSectionContent[] = [
             "professional advisers or authorities, where the law actually requires it",
           ]}
         />
-        <p>
-          A buyer never receives a seller&rsquo;s personal contact details from us, and a seller
-          never receives a buyer&rsquo;s. Where an introduction is genuinely needed — a handover
-          question, for instance — we ask both sides first.
-        </p>
+        {SHOW_SELL ? (
+          <p>
+            A buyer never receives a seller&rsquo;s personal contact details from us, and a seller
+            never receives a buyer&rsquo;s. Where an introduction is genuinely needed — a handover
+            question, for instance — we ask both sides first.
+          </p>
+        ) : (
+          <p>
+            Your contact details are never handed to anyone else on the marketplace. Where an
+            introduction is genuinely needed — a handover question, for instance — we ask you first.
+          </p>
+        )}
       </>
     ),
   },
@@ -227,19 +267,24 @@ const SECTIONS: LegalSectionContent[] = [
               <strong>Purchase delivered</strong> — your license key and the link to download your
               deliverable, sent the moment your payment is confirmed.
             </>,
-            <>
-              <strong>Submission received</strong> — confirmation that your project reached us and is
-              queued for review, plus anything the reviewer needs to ask you.
-            </>,
-            <>
-              <strong>Payout confirmed</strong> — proof that your 80% has been transferred, for your
-              records.
-            </>,
+            ...(SHOW_SELL
+              ? [
+                  <>
+                    <strong>Submission received</strong> — confirmation that your project reached us
+                    and is queued for review, plus anything the reviewer needs to ask you.
+                  </>,
+                  <>
+                    <strong>Payout confirmed</strong> — proof that your 80% has been transferred, for
+                    your records.
+                  </>,
+                ]
+              : []),
           ]}
         />
         <p>
-          We do not add you to a marketing list because you bought or submitted something. If we ever
-          start a newsletter, it will be something you opt into.
+          We do not add you to a marketing list because you bought
+          {SHOW_SELL ? " or submitted " : " "}something. If we ever start a newsletter, it will be
+          something you opt into.
         </p>
       </>
     ),
@@ -269,8 +314,14 @@ const SECTIONS: LegalSectionContent[] = [
         <LegalList
           items={[
             "Account data: while your account exists.",
-            "Orders, license keys, and payout records: kept after the sale — they are the record that a licence is valid, and we have accounting obligations that outlast the transaction.",
-            "Declined or withdrawn submissions, and the files attached to them: kept only while there is a reason to (an appeal, a re-submission, a dispute), then deleted.",
+            SHOW_SELL
+              ? "Orders, license keys, and payout records: kept after the sale — they are the record that a licence is valid, and we have accounting obligations that outlast the transaction."
+              : "Orders and license keys: kept after the sale — they are the record that a licence is valid, and we have accounting obligations that outlast the transaction.",
+            ...(SHOW_SELL
+              ? [
+                  "Declined or withdrawn submissions, and the files attached to them: kept only while there is a reason to (an appeal, a re-submission, a dispute), then deleted.",
+                ]
+              : []),
             "Deliverable ZIPs for live and sold listings: kept for as long as buyers are entitled to download what they paid for.",
           ]}
         />
@@ -286,7 +337,9 @@ const SECTIONS: LegalSectionContent[] = [
         <LegalList
           items={[
             "show you what we hold about you",
-            "correct anything that is wrong — including your payout details",
+            SHOW_SELL
+              ? "correct anything that is wrong — including your payout details"
+              : "correct anything that is wrong",
             "delete your data",
           ]}
         />
@@ -311,11 +364,17 @@ const SECTIONS: LegalSectionContent[] = [
         <LegalList
           items={[
             "Passwords are hashed, never stored in plain text.",
-            "Payout identifiers are encrypted at rest and visible only to admins.",
-            "Deliverable ZIPs and verification READMEs live on a private disk with no public URL.",
+            ...(SHOW_SELL
+              ? ["Payout identifiers are encrypted at rest and visible only to admins."]
+              : []),
+            SHOW_SELL
+              ? "Deliverable ZIPs and verification READMEs live on a private disk with no public URL."
+              : "Deliverable ZIPs live on a private disk with no public URL.",
             "Every download is gated: signed in, order is yours, order is paid, license key matches.",
             "Traffic to the site is served over HTTPS.",
-            "Access to the admin tools is limited to the people who need it to review listings and run payouts.",
+            SHOW_SELL
+              ? "Access to the admin tools is limited to the people who need it to review listings and run payouts."
+              : "Access to the admin tools is limited to the people who need it to review and publish listings.",
           ]}
         />
         <p>
@@ -352,14 +411,19 @@ export default function PrivacyPage() {
       command="mdn legal --privacy"
       title="Privacy"
       titleAccent="policy."
-      lead="What we collect, why we collect it, and how the sensitive parts — your payout details and the files you upload — are actually protected. We do not sell personal data."
+      lead={
+        SHOW_SELL
+          ? "What we collect, why we collect it, and how the sensitive parts — your payout details and the files you upload — are actually protected. We do not sell personal data."
+          : "What we collect, why we collect it, and how the sensitive parts — your account, your orders and your downloads — are actually protected. We do not sell personal data."
+      }
       updated={LAST_UPDATED}
       sections={SECTIONS}
       sibling={{
         href: "/terms",
         label: "Terms & conditions",
-        description:
-          "How buying works, what your license covers, why sales are final once the code is delivered, and the flat 20% commission sellers pay.",
+        description: SHOW_SELL
+          ? "How buying works, what your license covers, why sales are final once the code is delivered, and the flat 20% commission sellers pay."
+          : "How buying works, what your license covers, and why sales are final once the code is delivered.",
       }}
     />
   );

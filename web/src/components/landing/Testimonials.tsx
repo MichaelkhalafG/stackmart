@@ -1,3 +1,5 @@
+import { SHOW_SELL } from "@/lib/config";
+
 /** Social proof — approved landing design. Static copy, as specified. */
 const TESTIMONIALS = [
   {
@@ -7,12 +9,22 @@ const TESTIMONIALS = [
     name: "Maya R.",
     role: "Acquired Inboxly",
   },
-  {
-    quote: "Listed on Friday, three vetted offers by Monday. No tire-kickers, no wasted calls.",
-    initials: "DK",
-    name: "Devin K.",
-    role: "Sold Cronbase",
-  },
+  // The middle slot is the seller's voice in the full marketplace; buyer-only mode swaps in a
+  // second acquirer so the row stays three across.
+  SHOW_SELL
+    ? {
+        quote: "Listed on Friday, three vetted offers by Monday. No tire-kickers, no wasted calls.",
+        initials: "DK",
+        name: "Devin K.",
+        role: "Sold Cronbase",
+      }
+    : {
+        quote:
+          "Demo, repo, metrics — everything I needed to decide was on the listing. Bought Cronbase the same evening.",
+        initials: "DK",
+        name: "Devin K.",
+        role: "Acquired Cronbase",
+      },
   {
     quote:
       "Escrow plus handover support made my first acquisition genuinely low-risk. I've bought two more since.",
@@ -31,7 +43,7 @@ export function Testimonials() {
         </div>
         {/* Mobile scale tops out at the desktop floor (1.9rem) by 543px, so md+ is unchanged. */}
         <h2 className="mt-2.5 text-[clamp(1.9rem,3.2vw,2.8rem)] font-bold tracking-[-0.025em] text-primary max-md:text-[clamp(1.6rem,5.6vw,1.9rem)]">
-          Deals that close, founders who come back
+          {SHOW_SELL ? "Deals that close, founders who come back" : "Acquisitions that close, buyers who come back"}
         </h2>
       </div>
 

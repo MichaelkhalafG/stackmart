@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowDown, Check, FileArchive, KeyRound, Lock, ShieldCheck } from "lucide-react";
 
 import { api, ApiError } from "@/lib/api";
+import { SHOW_SELL } from "@/lib/config";
 import { formatPrice } from "@/components/product/MarketplaceCard";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -136,7 +137,9 @@ export function MockCheckout() {
                 {
                   icon: FileArchive,
                   title: "The full source-code ZIP",
-                  body: "The complete deliverable the seller packaged. Served privately to your account — never a public link.",
+                  body: SHOW_SELL
+                    ? "The complete deliverable the seller packaged. Served privately to your account — never a public link."
+                    : "The complete deliverable packaged with this listing. Served privately to your account — never a public link.",
                 },
                 {
                   icon: ShieldCheck,

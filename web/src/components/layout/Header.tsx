@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { SHOW_SELL } from "@/lib/config";
 import { useAuthStore } from "@/store/auth";
 import { categoryInitials, formatCompactMoney, type CategoryWithCount, type FeaturedProduct } from "@/lib/catalog";
 import { Logo } from "./Logo";
@@ -24,9 +25,12 @@ function terminalHandle(name: string): string {
   return handle === "" ? "user" : handle;
 }
 
-/** Nav links. "How it works" anchors a landing section; "Guidelines" is a real page. */
+/**
+ * Nav links. "How it works" anchors a landing section; "Guidelines" is a real page. The sell entry
+ * drops out in buyer-only mode (SHOW_SELL) — a "Home" link takes the leading slot instead.
+ */
 const NAV_LINKS = [
-  { href: "/sell", label: "Sell your SaaS" },
+  ...(SHOW_SELL ? [{ href: "/sell", label: "Sell your SaaS" }] : []),
   { href: "/#how", label: "How it works" },
   { href: "/guidelines", label: "Guidelines" },
 ];
@@ -142,6 +146,15 @@ export function Header({
           {/* ── Desktop nav (lg and up) ───────────────────────────────────────── */}
           <div className="hidden flex-1 items-center justify-between gap-6 lg:flex">
             <nav className="flex items-center gap-1 text-[15px] font-medium whitespace-nowrap">
+              {!SHOW_SELL ? (
+                <Link
+                  href="/"
+                  className="rounded-md px-3 py-2 text-fg transition-colors hover:bg-canvas-subtle hover:text-accent"
+                >
+                  Home
+                </Link>
+              ) : null}
+
               {/* The wrapper is the hover region: the panel is a DOM descendant of it, so moving the
                   cursor from the trigger into the panel never leaves this element. */}
               <div
@@ -271,6 +284,15 @@ export function Header({
             </div>
 
             <nav className="mt-6 flex flex-col gap-0.5 text-[17px] font-medium">
+              {!SHOW_SELL ? (
+                <Link
+                  href="/"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-2.5 py-3 text-primary hover:bg-canvas-subtle"
+                >
+                  Home
+                </Link>
+              ) : null}
               <Link
                 href="/marketplace"
                 onClick={() => setMobileOpen(false)}

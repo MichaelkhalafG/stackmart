@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SHOW_SELL } from "@/lib/config";
 import {
   LEGAL_CONTACT_EMAIL,
   LEGAL_JURISDICTION_NOTE,
@@ -11,8 +12,9 @@ import {
 } from "@/components/legal/LegalShell";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
-const TERMS_DESCRIPTION =
-  "The terms of using MDN STACKMART — how buying works (one product per order, license key plus the full source-code ZIP on payment), what the license covers, why sales are final after delivery, how sellers submit and get reviewed, and the flat 20% commission.";
+const TERMS_DESCRIPTION = SHOW_SELL
+  ? "The terms of using MDN STACKMART — how buying works (one product per order, license key plus the full source-code ZIP on payment), what the license covers, why sales are final after delivery, how sellers submit and get reviewed, and the flat 20% commission."
+  : "The terms of using MDN STACKMART — how buying works (one product per order, license key plus the full source-code ZIP on payment), what the license covers, and why sales are final after delivery.";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions",
@@ -46,6 +48,12 @@ const LAST_UPDATED = "14 July 2026";
  * sellers submit without an account) — it is not boilerplate. The layout comes from `<LegalShell>`,
  * shared with /privacy.
  *
+ * BUYER-ONLY MODE (SHOW_SELL=false): the four seller-side sections (Selling / What sellers promise
+ * us / How review works / Commission and payouts) drop out of the array — which drops them from the
+ * table of contents and renumbers the rest automatically — and the sections that address both sides
+ * render a buyer-only variant. What remains still describes the whole of what the site offers a
+ * buyer; nothing is deleted, so flipping the flag restores the full document.
+ *
  * NOTE: the payment gateway is a pending business decision (CLAUDE.md), so this document refers to
  * "our payment provider" and never names one.
  */
@@ -57,19 +65,24 @@ const SECTIONS: LegalSectionContent[] = [
       <>
         <p>
           MDN STACKMART is a <strong>curated marketplace</strong> for ready-made micro-SaaS
-          products, web apps, and codebases. Sellers submit their projects to us; our team reviews
-          each one; and only the projects we approve are published as listings. Nothing
-          self-publishes, and no listing appears because someone paid to put it there.
+          products, web apps, and codebases.{" "}
+          {SHOW_SELL
+            ? "Sellers submit their projects to us; our team reviews each one; and only the projects we approve are published as listings."
+            : "Every project is reviewed by our team, and only the ones we approve are published as listings."}{" "}
+          Nothing self-publishes, and no listing appears because someone paid to put it there.
         </p>
         <p>
-          These terms apply to everyone who uses the site — whether you are buying a product,
-          submitting one, or just browsing. By using MDN STACKMART you agree to them. If you do not
-          agree, please do not use the site.
+          These terms apply to everyone who uses the site —{" "}
+          {SHOW_SELL
+            ? "whether you are buying a product, submitting one, or just browsing"
+            : "whether you are buying a product or just browsing"}
+          . By using MDN STACKMART you agree to them. If you do not agree, please do not use the
+          site.
         </p>
         <p>
           We are the marketplace, not the author of the products we list. We vet what we publish and
           we stand behind delivering exactly what a listing describes, but the code itself was
-          written by the seller.
+          written by {SHOW_SELL ? "the seller" : "its original developer"}.
         </p>
       </>
     ),
@@ -84,11 +97,13 @@ const SECTIONS: LegalSectionContent[] = [
           tell us if you think someone else has got into your account. Anything done from your
           account is treated as done by you.
         </p>
-        <p>
-          Sellers do <strong>not</strong> need an account. Projects are submitted through the{" "}
-          <Link href="/sell">seller form</Link>, and everything after that — questions, the review
-          outcome, payout — happens by email.
-        </p>
+        {SHOW_SELL ? (
+          <p>
+            Sellers do <strong>not</strong> need an account. Projects are submitted through the{" "}
+            <Link href="/sell">seller form</Link>, and everything after that — questions, the review
+            outcome, payout — happens by email.
+          </p>
+        ) : null}
       </>
     ),
   },
@@ -137,7 +152,9 @@ const SECTIONS: LegalSectionContent[] = [
         </p>
         <p>
           The listing is the definition of what transfers. It states the scope: the source code, plus
-          any assets, domains, or accounts the seller has explicitly included. <strong>
+          any assets, domains, or accounts{" "}
+          {SHOW_SELL ? "the seller has explicitly included" : "explicitly included with it"}.{" "}
+          <strong>
             Anything not stated on the listing does not transfer.
           </strong>{" "}
           If a listing does not mention a domain, a customer list, a hosting account, or a trademark,
@@ -203,6 +220,9 @@ const SECTIONS: LegalSectionContent[] = [
       </>
     ),
   },
+  // ── Seller-side sections. Present only when the marketplace accepts submissions (SHOW_SELL);
+  //    in buyer-only mode they drop out of the TOC and the document renumbers itself. ──
+  ...(!SHOW_SELL ? [] : [
   {
     id: "selling",
     title: "Selling on MDN STACKMART",
@@ -326,21 +346,35 @@ const SECTIONS: LegalSectionContent[] = [
       </>
     ),
   },
+  ]),
   {
     id: "prohibited",
     title: "What you must not do",
     body: (
       <>
-        <p>On either side of the marketplace, the following will get you removed:</p>
+        <p>
+          {SHOW_SELL
+            ? "On either side of the marketplace, the following will get you removed:"
+            : "The following will get you removed:"}
+        </p>
         <LegalList
-          items={[
-            "Submitting malware, backdoors, credential harvesters, or anything designed to harm the people who run it.",
-            "Selling code you do not have the right to sell, or code that infringes someone else's copyright, trademark, or licence.",
-            "Misrepresenting metrics, revenue, users, or the state of a product — including quietly leaving out that it is broken or already sold.",
-            "Sharing, publishing, or reselling a license key, or trying to download a product you did not buy.",
-            "Attacking, scraping, overloading, or attempting to bypass the access controls on this site — including the download gating.",
-            "Impersonating another person or business, or using the marketplace to launder or defraud.",
-          ]}
+          items={
+            SHOW_SELL
+              ? [
+                  "Submitting malware, backdoors, credential harvesters, or anything designed to harm the people who run it.",
+                  "Selling code you do not have the right to sell, or code that infringes someone else's copyright, trademark, or licence.",
+                  "Misrepresenting metrics, revenue, users, or the state of a product — including quietly leaving out that it is broken or already sold.",
+                  "Sharing, publishing, or reselling a license key, or trying to download a product you did not buy.",
+                  "Attacking, scraping, overloading, or attempting to bypass the access controls on this site — including the download gating.",
+                  "Impersonating another person or business, or using the marketplace to launder or defraud.",
+                ]
+              : [
+                  "Sharing, publishing, or reselling a license key, or trying to download a product you did not buy.",
+                  "Redistributing a deliverable you bought as a competing copy of the listing it came from.",
+                  "Attacking, scraping, overloading, or attempting to bypass the access controls on this site — including the download gating.",
+                  "Impersonating another person or business, or using the marketplace to launder or defraud.",
+                ]
+          }
         />
       </>
     ),
@@ -370,10 +404,10 @@ const SECTIONS: LegalSectionContent[] = [
     body: (
       <>
         <p>
-          We can suspend or close an account, revoke a license key, unpublish a listing, or refuse a
-          submission if these terms are being broken, if we are being defrauded, or if we are
-          required to. Where we reasonably can, we will tell you why and give you the chance to put
-          it right.
+          We can suspend or close an account, revoke a license key
+          {SHOW_SELL ? ", unpublish a listing, or refuse a submission" : ", or unpublish a listing"}{" "}
+          if these terms are being broken, if we are being defrauded, or if we are required to. Where
+          we reasonably can, we will tell you why and give you the chance to put it right.
         </p>
         <p>
           If your account is closed, products you legitimately bought stay bought — the license you
@@ -391,8 +425,8 @@ const SECTIONS: LegalSectionContent[] = [
         <p>
           The marketplace will change, and so will this document. When it does, we update the
           &ldquo;last updated&rdquo; date at the top of this page. If a change materially affects
-          people who have already bought or already submitted, we will say so plainly rather than
-          slip it in.
+          people who have already bought{SHOW_SELL ? " or already submitted" : ""}, we will say so
+          plainly rather than slip it in.
         </p>
         <p>
           Changes are not retroactive: an order you have already completed is governed by the terms
@@ -410,8 +444,8 @@ const SECTIONS: LegalSectionContent[] = [
           {LEGAL_JURISDICTION_NOTE}
         </LegalCallout>
         <p>
-          For anything in this document — a delivery problem, a submission, a licence question, or a
-          complaint — write to{" "}
+          For anything in this document — a delivery problem
+          {SHOW_SELL ? ", a submission," : ","} a licence question, or a complaint — write to{" "}
           <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>. How the platform works
           in practice is set out on the <Link href="/guidelines">guidelines page</Link>, and how we
           handle your data is set out in the <Link href="/privacy">privacy policy</Link>.
@@ -428,14 +462,19 @@ export default function TermsPage() {
       command="mdn legal --terms"
       title="Terms &"
       titleAccent="conditions."
-      lead="The rules of the marketplace, in plain English: what you get when you buy, what you promise when you sell, and what we do in between. No padding, no small print you are meant to miss."
+      lead={
+        SHOW_SELL
+          ? "The rules of the marketplace, in plain English: what you get when you buy, what you promise when you sell, and what we do in between. No padding, no small print you are meant to miss."
+          : "The rules of the marketplace, in plain English: what you get when you buy, what your license covers, and what we do in between. No padding, no small print you are meant to miss."
+      }
       updated={LAST_UPDATED}
       sections={SECTIONS}
       sibling={{
         href: "/privacy",
         label: "Privacy policy",
-        description:
-          "What we collect, why we collect it, how payout details and uploaded files are protected, and the rights you have over your data.",
+        description: SHOW_SELL
+          ? "What we collect, why we collect it, how payout details and uploaded files are protected, and the rights you have over your data."
+          : "What we collect, why we collect it, how your account and order data are protected, and the rights you have over any of it.",
       }}
     />
   );

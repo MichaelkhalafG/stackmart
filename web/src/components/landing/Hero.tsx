@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import type { FeaturedProduct } from "@/lib/catalog";
+import { SHOW_SELL } from "@/lib/config";
 
 import { HeroCardShuffle } from "./HeroCardShuffle";
 
@@ -64,12 +65,14 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
           >
             Browse listings
           </Link>
-          <Link
-            href="/sell"
-            className="flex min-h-11 flex-1 items-center justify-center rounded-md border border-border bg-canvas px-4 text-[15px] font-semibold text-primary transition-[border-color,background-color] duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            List your SaaS
-          </Link>
+          {SHOW_SELL ? (
+            <Link
+              href="/sell"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-md border border-border bg-canvas px-4 text-[15px] font-semibold text-primary transition-[border-color,background-color] duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              List your SaaS
+            </Link>
+          ) : null}
         </div>
 
         {/* Trust numbers — 3-across strip, each cell centered with a divider between. */}
@@ -119,12 +122,14 @@ export function Hero({ products }: { products: FeaturedProduct[] }) {
             >
               Browse listings
             </Link>
-            <Link
-              href="/sell"
-              className="rounded-md border border-border bg-canvas px-7 py-[15px] text-base font-semibold text-primary transition-[border-color,background-color] duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-            >
-              List your SaaS
-            </Link>
+            {SHOW_SELL ? (
+              <Link
+                href="/sell"
+                className="rounded-md border border-border bg-canvas px-7 py-[15px] text-base font-semibold text-primary transition-[border-color,background-color] duration-200 hover:border-primary hover:bg-canvas-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                List your SaaS
+              </Link>
+            ) : null}
           </div>
 
           {/* Trust line — one dot-separated inline row. */}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { fetchCategoriesWithCounts, fetchFeatured, fetchTopPriced } from "@/lib/catalog";
+import { SHOW_SELL } from "@/lib/config";
 import { CategoryGrid } from "@/components/landing/CategoryGrid";
 import { FeaturedListings } from "@/components/landing/FeaturedListings";
 import { Hero } from "@/components/landing/Hero";
@@ -71,9 +72,8 @@ export default async function HomePage() {
       <FeaturedListings products={featured} />
       <HowItWorks />
       <Testimonials />
-      <SellCta />
+      {SHOW_SELL ? <SellCta /> : null}
       <CategoryGrid categories={categories} />
-      
     </>
   );
 }

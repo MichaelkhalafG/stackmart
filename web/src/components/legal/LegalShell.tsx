@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { SHOW_SELL } from "@/lib/config";
 import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 
 /**
@@ -219,7 +220,7 @@ export function LegalShell({
               <h2 className="text-[1.15rem] font-semibold text-primary">Questions about this?</h2>
               <p className="mt-2.5 text-[15px] leading-[1.6] text-fg-muted">
                 Write to us and a human on the team will answer — the same address handles delivery
-                problems, seller submissions, and data requests.
+                problems{SHOW_SELL ? ", seller submissions," : ""} and data requests.
               </p>
               <a
                 href={`mailto:${LEGAL_CONTACT_EMAIL}`}

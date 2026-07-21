@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
+import { SHOW_SELL } from "@/lib/config";
 import { Logo } from "./Logo";
 
 /**
@@ -17,7 +18,7 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
     links: [
       { label: "Browse listings", href: "/marketplace" },
       { label: "Categories", href: "/#about" },
-      { label: "List your SaaS", href: "/sell" },
+      ...(SHOW_SELL ? [{ label: "List your SaaS", href: "/sell" }] : []),
     ],
   },
   {
@@ -36,6 +37,11 @@ const COLUMNS: Array<{ title: string; links: Array<{ label: string; href: string
     ],
   },
 ];
+
+/** Brand tagline — printed in both the desktop and the mobile footer. */
+const TAGLINE = SHOW_SELL
+  ? "The curated marketplace for buying and selling vetted, profitable micro-SaaS."
+  : "The curated marketplace for acquiring vetted, profitable micro-SaaS.";
 
 const LEGAL = [
   { label: "Terms", href: "/terms" },
@@ -62,9 +68,7 @@ export function Footer() {
         <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] gap-x-8 gap-y-10">
           <div className="max-w-[320px]">
             <Logo size="footer" variant="light" />
-            <p className="mt-4 text-sm leading-[1.6] text-canvas/65">
-              The curated marketplace for buying and selling vetted, profitable micro-SaaS.
-            </p>
+            <p className="mt-4 text-sm leading-[1.6] text-canvas/65">{TAGLINE}</p>
             <p className="mono mt-5 inline-flex items-center gap-2 rounded-md border border-canvas/15 bg-canvas/5 px-2.5 py-1.5 text-[11.5px] tracking-wide text-tag-bg/85">
               <span
                 className="anim-pulse-dot inline-block size-1.5 rounded-full bg-accent"
@@ -114,9 +118,7 @@ export function Footer() {
       {/* ── MOBILE (< md) — purpose-built, not a restack ───────────────────── */}
       <div className="relative z-10 container-page pt-10 pb-8 md:hidden">
         <Logo size="footer" variant="light" />
-        <p className="mt-3 max-w-[300px] text-sm leading-[1.55] text-canvas/65">
-          The curated marketplace for buying and selling vetted, profitable micro-SaaS.
-        </p>
+        <p className="mt-3 max-w-[300px] text-sm leading-[1.55] text-canvas/65">{TAGLINE}</p>
         <p className="mono mt-4 inline-flex items-center gap-2 text-[11px] tracking-wide text-tag-bg/80">
           <span
             className="anim-pulse-dot inline-block size-1.5 rounded-full bg-accent"
@@ -133,12 +135,14 @@ export function Footer() {
           >
             Browse listings
           </Link>
-          <Link
-            href="/sell"
-            className={`flex min-h-12 items-center justify-center rounded-md border border-canvas/25 px-5 text-[15px] font-semibold text-canvas transition-colors hover:border-canvas/45 hover:bg-canvas/10 ${FOCUS}`}
-          >
-            List your SaaS
-          </Link>
+          {SHOW_SELL ? (
+            <Link
+              href="/sell"
+              className={`flex min-h-12 items-center justify-center rounded-md border border-canvas/25 px-5 text-[15px] font-semibold text-canvas transition-colors hover:border-canvas/45 hover:bg-canvas/10 ${FOCUS}`}
+            >
+              List your SaaS
+            </Link>
+          ) : null}
         </div>
 
         {/* Compact collapsed groups — native <details>, so no JS and no hydration cost. */}

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
+import { SHOW_SELL } from "@/lib/config";
 import { SellForm } from "@/components/sell/SellForm";
 import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
@@ -37,6 +39,10 @@ export const metadata: Metadata = {
  * then the sectioned form card beside its sticky progress rail.
  */
 export default function SellPage() {
+  // Buyer-only mode: the route stays in the build but renders the 404, so /sell is unreachable even
+  // by direct URL. Everything below is intact — flip SHOW_SELL to restore it.
+  if (!SHOW_SELL) notFound();
+
   return (
     <div className="container-page py-10 max-md:px-0 max-md:pt-0 max-md:pb-0 sm:py-14">
       {/* MOBILE (<md): the shared branded navy coding-motif header band. */}

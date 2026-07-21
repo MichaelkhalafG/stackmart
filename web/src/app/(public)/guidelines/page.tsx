@@ -14,13 +14,15 @@ import {
   Upload,
 } from "lucide-react";
 
+import { SHOW_SELL } from "@/lib/config";
 import { GuidelinesFaq } from "@/components/guidelines/GuidelinesFaq";
 import { GuidelinesSwitch } from "@/components/guidelines/GuidelinesSwitch";
 import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 import { DEFAULT_OG_IMAGE } from "@/components/seo/JsonLd";
 
-const GUIDELINES_DESCRIPTION =
-  "How MDN STACKMART works — how buyers browse vetted listings, buy securely, and receive a license key plus the deliverable ZIP, and how sellers submit, get reviewed, go live, and get paid on a flat 20% commission. Plus a full buyer and seller FAQ.";
+const GUIDELINES_DESCRIPTION = SHOW_SELL
+  ? "How MDN STACKMART works — how buyers browse vetted listings, buy securely, and receive a license key plus the deliverable ZIP, and how sellers submit, get reviewed, go live, and get paid on a flat 20% commission. Plus a full buyer and seller FAQ."
+  : "How MDN STACKMART works — how to browse vetted listings, buy securely, and receive a license key plus the full deliverable ZIP the moment payment is confirmed. Plus a full buyer FAQ.";
 
 export const metadata: Metadata = {
   title: "Guidelines",
@@ -46,8 +48,9 @@ export const metadata: Metadata = {
  * Guidelines `/guidelines` — the public "how this platform works" page, linked from the header nav
  * (it replaced "About") and from the footer's Resources column.
  *
- * PUBLIC and un-gated: buyers and sellers read the same page, so both halves are always visible —
- * there is no auth check and no seller-only branch (sellers have no accounts; CLAUDE.md).
+ * PUBLIC: there is no auth check here (sellers have no accounts; CLAUDE.md). The seller half —
+ * steps, commission panel, FAQ set, anchors and CTA — is gated on SHOW_SELL, so buyer-only mode
+ * renders a page that never mentions selling. Nothing is deleted; flipping the flag restores it.
  *
  * A Server Component with static metadata — nothing here is fetched or personalised, so the whole
  * page prerenders. It is full-bleed (no `Container` layout) and composes the landing design's
@@ -130,12 +133,14 @@ const COMMISSION_POINTS = [
 
 /** The mono code whisper behind the FAQ band — decorative only, static (no hydration risk). */
 const FAQ_SNIPPET = [
-  "$ stackmart verify --submission ./project.zip",
+  SHOW_SELL
+    ? "$ stackmart verify --submission ./project.zip"
+    : "$ stackmart verify --listing ./cronbase",
   "",
   "  ✓ readme .................. reproducible",
   "  ✓ metrics ................. checked",
   "  ✓ demo .................... reachable",
-  "  ✓ status .................. approved",
+  SHOW_SELL ? "  ✓ status .................. approved" : "  ✓ status .................. vetted",
 ];
 
 type Step = { icon: typeof Search; step: string; title: string; body: string };
@@ -196,15 +201,21 @@ function StepGrid({ steps }: { steps: Step[] }) {
 export default function GuidelinesPage() {
   return (
     <>
-      {/* MOBILE (<md): the shared branded navy header band, with the commission chip kept. */}
+      {/* MOBILE (<md): the shared branded navy header band, with the trust chip kept. */}
       <MobilePageHeader
         command="mdn docs --guidelines"
         title="How MDN STACKMART works"
-        subhead="How buying and selling vetted micro-SaaS works here — for both buyers and sellers."
+        subhead={
+          SHOW_SELL
+            ? "How buying and selling vetted micro-SaaS works here — for both buyers and sellers."
+            : "How buying a vetted micro-SaaS works here — from browsing to owning the code."
+        }
         extra={
           <span className="mono inline-flex items-center gap-2 rounded-md border border-tag-bg/25 bg-tag-bg/10 px-3 py-1.5 text-[12px] text-tag-bg">
             <span className="anim-pulse-dot size-1.5 rounded-full bg-tag-bg" aria-hidden />
-            flat 20% commission · no listing fee
+            {SHOW_SELL
+              ? "flat 20% commission · no listing fee"
+              : "every listing vetted · full source code"}
           </span>
         }
       />
@@ -228,21 +239,23 @@ export default function GuidelinesPage() {
 
             {/* Mobile-only tight intro — says what MDN STACKMART is in two sentences. */}
             <p className="mt-4 text-[15px] leading-[1.55] text-canvas/75 md:hidden">
-              A curated marketplace for buying and selling profitable micro-SaaS. Every listing is
-              vetted by our team, and every sale delivers the full source code plus a license key.
+              {SHOW_SELL
+                ? "A curated marketplace for buying and selling profitable micro-SaaS. Every listing is vetted by our team, and every sale delivers the full source code plus a license key."
+                : "A curated marketplace for acquiring profitable micro-SaaS. Every listing is vetted by our team, and every purchase delivers the full source code plus a license key."}
             </p>
 
-            {/* Full intro — desktop only (unchanged copy). */}
+            {/* Full intro — desktop only. */}
             <p className="mt-6 hidden max-w-[640px] text-[clamp(1.05rem,1.5vw,1.2rem)] leading-[1.6] text-canvas/75 md:block">
-              MDN STACKMART is a curated marketplace for buying and selling profitable micro-SaaS —
-              ready-made products, web apps, and codebases. Every listing is vetted by our team
-              before it goes live, and every sale delivers the real thing: the full source code plus
-              a license key. This page is the whole process, end to end, for both sides of it.
+              {SHOW_SELL
+                ? "MDN STACKMART is a curated marketplace for buying and selling profitable micro-SaaS — ready-made products, web apps, and codebases. Every listing is vetted by our team before it goes live, and every sale delivers the real thing: the full source code plus a license key. This page is the whole process, end to end, for both sides of it."
+                : "MDN STACKMART is a curated marketplace for acquiring profitable micro-SaaS — ready-made products, web apps, and codebases. Every listing is vetted by our team before it goes live, and every purchase delivers the real thing: the full source code plus a license key. This page is the whole process, end to end."}
             </p>
 
             <div className="mono mt-6 inline-flex items-center gap-2.5 rounded-md border border-tag-bg/25 bg-tag-bg/10 px-3.5 py-2 text-[12.5px] text-tag-bg md:mt-7">
               <span className="anim-pulse-dot size-1.5 rounded-full bg-tag-bg" aria-hidden />
-              flat 20% commission · no listing fee
+              {SHOW_SELL
+                ? "flat 20% commission · no listing fee"
+                : "every listing vetted · full source code"}
             </div>
 
             {/* Desktop anchor buttons — on mobile the sticky segmented control below replaces these. */}
@@ -253,12 +266,14 @@ export default function GuidelinesPage() {
               >
                 For buyers
               </Link>
-              <Link
-                href="#for-sellers"
-                className="rounded-md border border-canvas/35 bg-transparent px-[22px] py-3 text-[15px] font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
-              >
-                For sellers
-              </Link>
+              {SHOW_SELL ? (
+                <Link
+                  href="#for-sellers"
+                  className="rounded-md border border-canvas/35 bg-transparent px-[22px] py-3 text-[15px] font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
+                >
+                  For sellers
+                </Link>
+              ) : null}
               <Link
                 href="#faq"
                 className="rounded-md border border-canvas/35 bg-transparent px-[22px] py-3 text-[15px] font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
@@ -302,11 +317,9 @@ export default function GuidelinesPage() {
                   What &ldquo;vetted&rdquo; means
                 </span>
                 <p className="mt-5 text-[15px] leading-[1.65] text-canvas/75">
-                  Nothing on MDN STACKMART self-publishes. Before a listing appears, an admin reads
-                  the seller&rsquo;s code, follows the README they wrote to reproduce what they
-                  claimed, opens the demo, and sanity-checks the metrics and category. A claim we
-                  cannot verify does not get published. That is the entire point of a curated
-                  marketplace — the filtering happens before you ever see the listing.
+                  {SHOW_SELL
+                    ? "Nothing on MDN STACKMART self-publishes. Before a listing appears, an admin reads the seller’s code, follows the README they wrote to reproduce what they claimed, opens the demo, and sanity-checks the metrics and category. A claim we cannot verify does not get published. That is the entire point of a curated marketplace — the filtering happens before you ever see the listing."
+                    : "Nothing on MDN STACKMART self-publishes. Before a listing appears, an admin reads the code, follows the accompanying README to reproduce every claim made for it, opens the demo, and sanity-checks the metrics and category. A claim we cannot verify does not get published. That is the entire point of a curated marketplace — the filtering happens before you ever see the listing."}
                 </p>
               </div>
 
@@ -332,6 +345,7 @@ export default function GuidelinesPage() {
           </section>
         }
         sellers={
+          !SHOW_SELL ? undefined : (
           <section id="for-sellers" className="mesh-stats scroll-mt-20 border-b border-border">
         <div className="container-page py-12 md:py-[clamp(64px,8vw,104px)]">
           <div className="max-w-[680px]">
@@ -416,6 +430,7 @@ export default function GuidelinesPage() {
           </div>
         </div>
           </section>
+          )
         }
         faq={
           <section
@@ -442,7 +457,9 @@ export default function GuidelinesPage() {
               Questions, answered straight
             </h2>
             <p className="mt-3 text-[15px] leading-[1.55] text-fg-muted md:mt-4 md:text-[17px] md:leading-[1.6]">
-              The things buyers and sellers actually ask us before they commit.
+              {SHOW_SELL
+                ? "The things buyers and sellers actually ask us before they commit."
+                : "The things buyers actually ask us before they commit."}
             </p>
           </div>
 
@@ -458,11 +475,20 @@ export default function GuidelinesPage() {
 
         <div className="relative container-page py-[clamp(64px,8vw,110px)] text-center">
           <h2 className="mx-auto max-w-[680px] text-[clamp(2rem,3.8vw,3rem)] leading-[1.1] font-bold tracking-[-0.03em] text-canvas">
-            Ready to <span className="text-tag-bg">buy or sell?</span>
+            {SHOW_SELL ? (
+              <>
+                Ready to <span className="text-tag-bg">buy or sell?</span>
+              </>
+            ) : (
+              <>
+                Ready to <span className="text-tag-bg">acquire?</span>
+              </>
+            )}
           </h2>
           <p className="mx-auto mt-5 max-w-[560px] text-[17px] leading-[1.6] text-canvas/75">
-            Browse what our team has already vetted, or put your own micro-SaaS in front of buyers
-            who are here to acquire.
+            {SHOW_SELL
+              ? "Browse what our team has already vetted, or put your own micro-SaaS in front of buyers who are here to acquire."
+              : "Browse what our team has already vetted — every listing comes with the full source code and a license key the moment you pay."}
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3.5">
@@ -472,12 +498,14 @@ export default function GuidelinesPage() {
             >
               Browse listings
             </Link>
-            <Link
-              href="/sell"
-              className="rounded-md border border-canvas/35 bg-transparent px-[30px] py-4 text-base font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
-            >
-              List your SaaS
-            </Link>
+            {SHOW_SELL ? (
+              <Link
+                href="/sell"
+                className="rounded-md border border-canvas/35 bg-transparent px-[30px] py-4 text-base font-semibold text-canvas transition-[border-color,background-color] duration-200 hover:border-canvas hover:bg-canvas/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-bg"
+              >
+                List your SaaS
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { SHOW_SELL } from "@/lib/config";
 import { Logo } from "@/components/layout/Logo";
 
 /**
@@ -108,7 +109,9 @@ export function AuthShell({
             the micro-SaaS marketplace
           </span>
           <p className="mt-6 max-w-[20ch] text-[clamp(1.45rem,2.8vw,2.15rem)] leading-[1.25] font-semibold text-canvas">
-            Buy and sell profitable software, transparently.
+            {SHOW_SELL
+              ? "Buy and sell profitable software, transparently."
+              : "Buy profitable software, transparently."}
           </p>
         </div>
 

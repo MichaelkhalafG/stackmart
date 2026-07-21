@@ -22,27 +22,25 @@ import { cn } from "@/lib/utils";
  */
 type SectionKey = "buyers" | "sellers" | "faq";
 
-const TABS: { key: SectionKey; label: string }[] = [
-  { key: "buyers", label: "For buyers" },
-  { key: "sellers", label: "For sellers" },
-  { key: "faq", label: "FAQ" },
-];
-
+/**
+ * `sellers` is omitted in buyer-only mode (SHOW_SELL=false) — the segment and its section both
+ * drop out, and the control becomes two-up.
+ */
 export function GuidelinesSwitch({
   buyers,
   sellers,
   faq,
 }: {
   buyers: ReactNode;
-  sellers: ReactNode;
+  sellers?: ReactNode;
   faq: ReactNode;
 }) {
   const [active, setActive] = useState<SectionKey>("buyers");
 
-  const sections: { key: SectionKey; node: ReactNode }[] = [
-    { key: "buyers", node: buyers },
-    { key: "sellers", node: sellers },
-    { key: "faq", node: faq },
+  const sections: { key: SectionKey; label: string; node: ReactNode }[] = [
+    { key: "buyers", label: "For buyers", node: buyers },
+    ...(sellers ? [{ key: "sellers" as const, label: "For sellers", node: sellers }] : []),
+    { key: "faq", label: "FAQ", node: faq },
   ];
 
   return (
@@ -51,8 +49,13 @@ export function GuidelinesSwitch({
         aria-label="Guidelines sections"
         className="sticky top-16 z-30 border-b border-border bg-canvas/95 px-4 py-2.5 backdrop-blur-sm md:hidden"
       >
-        <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-canvas-subtle p-1">
-          {TABS.map((tab) => {
+        <div
+          className={cn(
+            "grid gap-1 rounded-lg border border-border bg-canvas-subtle p-1",
+            sections.length === 3 ? "grid-cols-3" : "grid-cols-2",
+          )}
+        >
+          {sections.map((tab) => {
             const isActive = active === tab.key;
             return (
               <button

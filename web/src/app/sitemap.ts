@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { apiUrl } from "@/lib/apiBase";
+import { SHOW_SELL } from "@/lib/config";
 
 /**
  * sitemap.xml (S5.01) — the static public routes plus every published listing. Product slugs are
@@ -37,7 +38,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, changeFrequency: "daily", priority: 1 },
     { url: `${SITE_URL}/marketplace`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${SITE_URL}/sell`, changeFrequency: "monthly", priority: 0.5 },
+    // /sell 404s in buyer-only mode — don't advertise it to crawlers.
+    ...(SHOW_SELL
+      ? [{ url: `${SITE_URL}/sell`, changeFrequency: "monthly" as const, priority: 0.5 }]
+      : []),
     { url: `${SITE_URL}/guidelines`, changeFrequency: "monthly", priority: 0.6 },
   ];
 
