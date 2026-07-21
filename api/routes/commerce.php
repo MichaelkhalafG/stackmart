@@ -29,6 +29,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // { url }; the frontend only redirects, never names a gateway.
     Route::post('/checkout', [CheckoutController::class, 'store']);
 
+    // Mock-checkout settlement for the buyer's OWN pending order (fake provider only). This exists
+    // so the browser never has to call the provider webhook — that endpoint is now secret-gated and
+    // server-to-server only. Owner-checked (404 for anyone else) and throttled.
+    Route::post('/checkout/{order}/simulate', [CheckoutController::class, 'simulate'])
+        ->middleware('throttle:10,1');
+
     // J4.01 — buyer's orders READ API. The literal /orders (index) is declared BEFORE the
     // /orders/{order} wildcard (show) so it is never shadowed.
     Route::get('/orders', [OrderController::class, 'index']);
@@ -48,4 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
 // S4.02 — provider webhook. NO user auth (provider-verified inside PaymentProvider::handleWebhook);
 // registered OUTSIDE the auth:sanctum group. On a verified `paid` event → FulfillOrder; idempotent
 // (row-locked status guard); always 200.
-Route::post('/webhooks/payment', [WebhookController::class, 'handle']);
+//
+// SERVER-TO-SERVER ONLY. Verification is a shared secret (X-Webhook-Secret, PAYMENT_WEBHOOK_SECRET)
+// checked with hash_equals inside the provider — a missing or wrong secret is 401 and never reaches
+// an order. Browsers do not call this: the mock checkout uses /checkout/{order}/simulate above.
+// Throttled tightly on top, because an unauthenticated endpoint should never be free to hammer.
+Route::post('/webhooks/payment', [WebhookController::class, 'handle'])
+    ->middleware('throttle:30,1');

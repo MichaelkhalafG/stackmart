@@ -19,13 +19,17 @@ class User extends Authenticatable implements FilamentUser
     /**
      * The attributes that are mass assignable.
      *
+     * `is_admin` is deliberately NOT here. It is the flag that gates the Filament panel, so one
+     * careless `User::create($request->validated())` or `$user->update($request->all())` anywhere
+     * in the app's future would be anonymous privilege escalation. Set it explicitly (forceFill)
+     * at the two places that legitimately assign it: UserSeeder and the Filament UserResource.
+     *
      * @var list<string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'is_admin',
     ];
 
     /**
@@ -36,6 +40,21 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    /**
+     * Default attribute values for a NEW instance.
+     *
+     * `is_admin` has a database default of false, but a database default only ever touches the row —
+     * `User::create()` returns the in-memory model, which never learns what the DB filled in. With
+     * `is_admin` no longer mass-assignable, that left a freshly created user reporting `null` (a
+     * boolean cast on a missing attribute is null, not false) until it was reloaded. Defaulting it
+     * here means an unsaved User is a non-admin from the moment it exists — in memory and on disk.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_admin' => false,
     ];
 
     /**

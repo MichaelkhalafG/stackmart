@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Middleware\EnsureSellingEnabled;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,8 +26,11 @@ Route::get('/products/{product:slug}', [CatalogController::class, 'show']);
 Route::get('/categories', [CatalogController::class, 'categories']);
 
 // J3.01 (expanded by DR-8) — public seller submission (persists status=new, fires
-// SubmissionReceived). This is now a MULTIPART endpoint: an unauthenticated caller can push a
+// SubmissionReceived). This is a MULTIPART endpoint: an unauthenticated caller can push a
 // 100 MB ZIP + a README + 8 images per request, so it is rate-limited to blunt storage-exhaustion
 // abuse. It remains public by design — there are no seller accounts.
+//
+// EnsureSellingEnabled 404s the whole thing when the deployment is buyer-only (ENABLE_SELLING),
+// and runs before validation so a closed endpoint never processes an upload at all.
 Route::post('/submissions', [SubmissionController::class, 'store'])
-    ->middleware('throttle:10,1');
+    ->middleware([EnsureSellingEnabled::class, 'throttle:10,1']);

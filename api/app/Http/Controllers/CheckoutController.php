@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\ApplyPaymentEvent;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Order;
 use App\Models\Product;
+use App\Payments\PaymentEvent;
 use App\Payments\PaymentProvider;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * Buyer checkout (routes/commerce.php) — POST /api/checkout.
@@ -62,5 +66,51 @@ class CheckoutController extends Controller
         $order->save();
 
         return response()->json(['url' => $session->redirectUrl]);
+    }
+
+    /**
+     * POST /api/checkout/{order}/simulate — complete the MOCK checkout for the caller's OWN order.
+     *
+     * Exists because the mock checkout screen has to settle an order from the browser, and the only
+     * previous way to do that was posting to the open webhook. That made a forged `paid` callback
+     * available to anyone with curl, for ANY order reference. This endpoint closes that:
+     *
+     *   • Sanctum Bearer auth (route middleware) — no anonymous caller;
+     *   • OWNER of the order only — and a non-owner gets 404, not 403, so order ids/references
+     *     cannot be probed for existence;
+     *   • only while the FAKE provider is bound — with a real gateway this route 404s and
+     *     settlement can only come from the verified webhook;
+     *   • throttled (routes/commerce.php).
+     *
+     * Settlement itself goes through the SAME ApplyPaymentEvent the webhook uses, so the row-locked
+     * idempotency guard applies here too: replaying this call cannot re-mint a license or re-send
+     * the delivery email.
+     *
+     * This is still a SIMULATED payment — that is the point of the mock flow — so a signed-in
+     * visitor can complete a demo purchase without paying. That is inherent to running on the fake
+     * provider (ALLOW_FAKE_PAYMENTS_IN_PROD) and is not something this endpoint can fix; what it
+     * fixes is anonymous, unthrottled, any-order forgery.
+     */
+    public function simulate(Request $request, Order $order, ApplyPaymentEvent $settle): JsonResponse
+    {
+        // Mock settlement is a property of the fake provider only. Never reachable once a real
+        // provider is bound — that path must come from the verified webhook.
+        abort_unless(config('payments.provider') === 'fake', 404);
+
+        // Owner-only. 404 (not 403) so a non-owner learns nothing about whether the order exists.
+        abort_unless($order->user_id === $request->user()->id, 404);
+
+        $status = $request->validate([
+            'status' => ['required', 'string', 'in:'.PaymentEvent::STATUS_PAID.','.PaymentEvent::STATUS_FAILED],
+        ])['status'];
+
+        $settle->apply(new PaymentEvent(
+            providerReference: $order->provider_reference,
+            status: $status,
+            providerPaymentId: 'fake_'.Str::random(20),
+            raw: ['simulated' => true, 'status' => $status],
+        ));
+
+        return response()->json(['status' => $order->fresh()->status]);
     }
 }

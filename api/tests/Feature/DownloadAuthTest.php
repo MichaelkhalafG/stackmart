@@ -11,8 +11,9 @@ use Laravel\Sanctum\Sanctum;
  *
  * FOUR layers, all enforced: Sanctum auth + OWNER + status=paid + a matching LICENSE KEY.
  * The license key is an EXTRA gate on top of the original three, not a replacement — every
- * pre-existing rule below (non-owner 403, unpaid 403, refunded 403, unauthenticated 401, and
- * download_count incrementing only on success) still holds.
+ * pre-existing rule below (non-owner rejected, unpaid 403, refunded 403, unauthenticated 401, and
+ * download_count incrementing only on success) still holds. The non-owner case now answers 404
+ * rather than 403, so an intruder can't use the status code to confirm an order exists.
  *
  * NEVER stubs the endpoint; NEVER names a gateway. Engine-agnostic assertions.
  */
@@ -98,15 +99,16 @@ it('rejects a MISSING license key (422) — no file, no increment', function () 
 
 /* ── The original three layers still hold ──────────────────────────────────────────────────── */
 
-it('forbids a non-owner from downloading (403) even WITH the correct license key', function () {
+it('hides a non-owner\'s download behind a 404 even WITH the correct license key', function () {
     $owner = User::factory()->create();
     $order = paidOrderWithDeliverable($owner);
 
     Sanctum::actingAs(User::factory()->create()); // a different buyer
 
-    // Ownership is checked BEFORE the license — holding the key is not enough.
+    // Ownership is checked BEFORE the license — holding the key is not enough. 404 rather than 403
+    // so a non-owner can't distinguish an existing order from a nonexistent one.
     $this->postJson("/api/orders/{$order->id}/download", ['license_key' => $order->license_key])
-        ->assertForbidden();
+        ->assertNotFound();
 
     expect($order->fresh()->download_count)->toBe(0);
 });

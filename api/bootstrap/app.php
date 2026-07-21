@@ -15,7 +15,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Laravel 11 does NOT rate-limit the api group unless you ask, so every route without an
+        // explicit throttle was unlimited — catalogue scraping, unbounded order creation, hammering
+        // the webhook. A literal limit (rather than the named `api` limiter) keeps this self-contained:
+        // no RateLimiter::for() registration to remember, and it works under route:cache.
         //
+        // 120/min per token (falling back to IP) is a browsing ceiling, not a usage limit: a real
+        // visitor loading the marketplace, a listing, and their orders is nowhere near it. The
+        // stricter per-route throttles (auth 10/min, download 10/min, submissions 10/min, webhook
+        // 30/min) still apply on top — this is the floor under everything, not a replacement.
+        $middleware->throttleApi('120,1');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // SENSITIVE (DR-8): never flash the seller's financial details back into the session on a

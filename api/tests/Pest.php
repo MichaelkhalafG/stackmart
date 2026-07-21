@@ -45,6 +45,16 @@ expect()->extend('toBeOne', function () {
 */
 
 /**
+ * The shared secret the webhook tests configure and present.
+ *
+ * POST /api/webhooks/payment requires X-Webhook-Secret to match `payments.webhook_secret`
+ * (hash_equals) or it is 401 — see WebhookSecurityTest. Tests that want the verified-caller path
+ * set the config to this value and send this header; nothing reads it from the real environment,
+ * so the suite never depends on a developer having PAYMENT_WEBHOOK_SECRET in their .env.
+ */
+const TEST_WEBHOOK_SECRET = 'test-webhook-secret';
+
+/**
  * Whether S3.01 auth endpoints are registered on the current branch.
  *
  * The auth-flow tests are written to the FROZEN §Auth contract but the endpoints

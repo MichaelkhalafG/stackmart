@@ -66,6 +66,13 @@ class PasswordResetController extends Controller
                     'remember_token' => Str::random(60),
                 ])->save();
 
+                // Revoke EVERY access token. Rotating remember_token alone means nothing to Bearer
+                // auth, so before this a stolen token survived the reset — i.e. the one action a
+                // compromised user takes to lock an attacker out did not lock them out. Unlike the
+                // change-password path there is no "current" token to spare: this request is
+                // unauthenticated, and the person resetting is presumed to be locked out anyway.
+                $user->tokens()->delete();
+
                 event(new PasswordReset($user));
             }
         );

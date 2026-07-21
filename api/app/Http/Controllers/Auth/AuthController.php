@@ -27,17 +27,26 @@ class AuthController extends Controller
     /**
      * POST /api/auth/register — create a buyer account and issue a token.
      *
-     * `is_admin` is forced to false (never taken from input). The password is hashed
-     * by the model's `password => 'hashed'` cast.
+     * Every field is passed explicitly from validated input — never `$request->all()`.
+     *
+     * `is_admin` is NOT mass-assignable (User::$fillable), so it cannot arrive from the request no
+     * matter what the body contains. It is instead assigned directly on the instance below: a
+     * property set is not mass assignment, so this stays explicit and deterministic rather than
+     * leaning on the column default, which would leave the returned model reporting null until it
+     * was reloaded. A registration can only ever produce a buyer.
+     *
+     * The password is hashed by the model's `password => 'hashed'` cast.
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
+        $user = new User([
             'name' => $request->validated('name'),
             'email' => $request->validated('email'),
             'password' => $request->validated('password'),
-            'is_admin' => false,
         ]);
+
+        $user->is_admin = false;
+        $user->save();
 
         $token = $user->createToken('auth')->plainTextToken;
 
@@ -100,7 +109,9 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'is_admin' => $user->is_admin,
+            // Cast at the boundary, matching ProfileController: the contract says boolean, and it
+            // should never be possible for this key to serialize as null.
+            'is_admin' => (bool) $user->is_admin,
         ];
     }
 }

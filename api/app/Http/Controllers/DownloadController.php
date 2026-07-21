@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  *
  * FOUR checks, in order — the license key is an EXTRA layer, NOT a replacement for the originals:
  *   1. Sanctum Bearer auth   (route middleware)
- *   2. OWNER of the order    → else 403
+ *   2. OWNER of the order    → else 404 (indistinguishable from an order that doesn't exist)
  *   3. order status = paid   → else 403
  *   4. submitted LICENSE KEY matches the order's → else 422 (no file, no count increment)
  *
@@ -31,8 +31,12 @@ class DownloadController extends Controller
 {
     public function store(DownloadRequest $request, Order $order): StreamedResponse
     {
-        // (2) + (3) — unchanged: never reveal the deliverable to anyone else, or for an unpaid order.
-        abort_unless($order->user_id === $request->user()->id, 403);
+        // (2) — never reveal the deliverable to anyone else. 404, not 403: a non-owner must not be
+        // able to tell an existing order from a nonexistent one by probing ids.
+        abort_unless($order->user_id === $request->user()->id, 404);
+
+        // (3) — the order is yours but not paid. 403 is correct here and leaks nothing: you already
+        // know your own order exists.
         abort_unless($order->status === Order::STATUS_PAID, 403);
 
         // (4) — the license gate.

@@ -33,6 +33,7 @@ final class FakePaymentProvider implements PaymentProvider
     public function handleWebhook(Request $request): ?PaymentEvent
     {
         $this->assertNotProduction();
+        $this->assertWebhookSecret($request);
 
         $reference = $request->input('ref', $request->input('provider_reference'));
         $status = $request->input('status');
@@ -51,6 +52,27 @@ final class FakePaymentProvider implements PaymentProvider
             providerPaymentId: (string) $request->input('payment_id', 'fake_' . Str::random(20)),
             raw: $request->all(),
         );
+    }
+
+    /**
+     * The webhook has no user session to authenticate against, so a shared secret is what proves the
+     * caller is the payment provider and not an attacker replaying a `paid` event for someone
+     * else's order. Compared with `hash_equals` so the secret can't be recovered by timing.
+     *
+     * FAIL CLOSED: an unconfigured secret rejects everything rather than waving everything through.
+     *
+     * The browser is NOT a legitimate caller of this endpoint and never carries the secret — the
+     * mock checkout screen drives POST /checkout/{order}/simulate instead, which is authenticated
+     * and owner-scoped.
+     */
+    private function assertWebhookSecret(Request $request): void
+    {
+        $expected = (string) config('payments.webhook_secret');
+        $given = (string) $request->header('X-Webhook-Secret', '');
+
+        if ($expected === '' || ! hash_equals($expected, $given)) {
+            abort(401, 'Invalid webhook signature.');
+        }
     }
 
     /**

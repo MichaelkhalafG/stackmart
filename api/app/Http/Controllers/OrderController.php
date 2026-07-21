@@ -35,19 +35,24 @@ class OrderController extends Controller
 
     /**
      * GET /api/orders/{order} — a single order, resolved by numeric id OR by
-     * `provider_reference` (the /checkout/success?ref= path). Owner-only: a
-     * non-owner gets 403, an unknown id/ref gets 404.
+     * `provider_reference` (the /checkout/success?ref= path).
+     *
+     * Owner-only, and a non-owner gets the SAME 404 as a nonexistent order. Answering 403 would
+     * have confirmed "this order exists, it just isn't yours", turning the endpoint into an
+     * oracle for probing order ids and references. Someone else's order should be indistinguishable
+     * from no order at all.
      */
     public function show(Request $request, string $order): OrderResource
     {
-        // Numeric → id lookup; otherwise treat the segment as a provider_reference.
+        // Numeric → id lookup; otherwise treat the segment as a provider_reference. Scoping the
+        // query to the caller means a non-owner can never load the row in the first place.
         $query = ctype_digit($order)
             ? Order::whereKey($order)
             : Order::where('provider_reference', $order);
 
-        $model = $query->with('product')->firstOrFail();
-
-        abort_unless($model->user_id === $request->user()->id, 403);
+        $model = $query->where('user_id', $request->user()->id)
+            ->with('product')
+            ->firstOrFail();
 
         return new OrderResource($model);
     }

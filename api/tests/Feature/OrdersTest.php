@@ -109,15 +109,18 @@ it('shows the same order by provider_reference', function () {
         ->and($res->json('data.provider_reference'))->toBe($order->provider_reference);
 });
 
-it('forbids a non-owner from viewing another buyer\'s order (by id and by reference)', function () {
+it('hides another buyer\'s order behind a 404 (by id and by reference)', function () {
     $product = Product::factory()->published()->create();
     $owner = User::factory()->create();
     $intruder = User::factory()->create();
     $order = Order::factory()->for($owner)->for($product)->create();
 
     Sanctum::actingAs($intruder);
-    $this->getJson("/api/orders/{$order->id}")->assertForbidden();          // 403 by id
-    $this->getJson("/api/orders/{$order->provider_reference}")->assertForbidden(); // 403 by ref
+
+    // 404, NOT 403: a 403 would confirm the order exists, making the endpoint an oracle for
+    // probing order ids and provider references. Someone else's order reads as no order at all.
+    $this->getJson("/api/orders/{$order->id}")->assertNotFound();
+    $this->getJson("/api/orders/{$order->provider_reference}")->assertNotFound();
 });
 
 it('returns 404 for an unknown id or reference', function () {

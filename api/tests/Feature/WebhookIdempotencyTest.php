@@ -17,10 +17,21 @@ use Illuminate\Support\Facades\Mail;
 
 $licensePattern = '/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/';
 
+// The webhook is now shared-secret gated (X-Webhook-Secret, hash_equals) — see WebhookSecurityTest
+// for the rejection cases. These tests configure the secret and present it, so they exercise the
+// same verified-caller path a real provider would.
+beforeEach(fn () => config(['payments.webhook_secret' => TEST_WEBHOOK_SECRET]));
+
 // A paid webhook event for a pending order, in the shape FakePaymentProvider reads (ref + status).
 function paidWebhookPayloadFor(Order $order): array
 {
     return ['ref' => $order->provider_reference, 'status' => 'paid'];
+}
+
+/** Headers a verified provider callback carries. */
+function webhookHeaders(): array
+{
+    return ['X-Webhook-Secret' => TEST_WEBHOOK_SECRET];
 }
 
 it('fulfils a pending order on a paid webhook event', function () use ($licensePattern) {
@@ -28,7 +39,7 @@ it('fulfils a pending order on a paid webhook event', function () use ($licenseP
     $order = Order::factory()->for(User::factory())->for(Product::factory()->published())->create();
     expect($order->status)->toBe(Order::STATUS_PENDING);
 
-    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order))->assertOk();
+    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order), webhookHeaders())->assertOk();
 
     $order->refresh();
     expect($order->status)->toBe(Order::STATUS_PAID)
@@ -44,14 +55,14 @@ it('is idempotent — a duplicate webhook event does not double-fulfil', functio
     $ref = $order->provider_reference;
 
     // First event fulfils the order.
-    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order))->assertOk();
+    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order), webhookHeaders())->assertOk();
     $order->refresh();
     $license = $order->license_key;
     $deliveredAt = $order->delivered_at;
     expect($license)->not->toBeNull()->and($deliveredAt)->not->toBeNull();
 
     // The SAME event again (duplicate provider_reference) must be a NO-OP.
-    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order))->assertOk();
+    $this->postJson('/api/webhooks/payment', paidWebhookPayloadFor($order), webhookHeaders())->assertOk();
     $order->refresh();
 
     expect($order->status)->toBe(Order::STATUS_PAID)

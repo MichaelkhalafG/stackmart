@@ -28,8 +28,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            // The API is a headless backend served under /api — the panel owns the web root.
-            ->path('')
+            // The API is a headless backend served under /api — the panel owns the web root by
+            // default. FILAMENT_ADMIN_PATH (config/features.php) moves it somewhere non-obvious in
+            // production so the admin login isn't the first thing served at the API domain root.
+            ->path(config('features.admin_path', ''))
             ->login()
             ->brandName('STACKMART')
             ->brandLogo(fn (): View => view('filament.admin.brand'))

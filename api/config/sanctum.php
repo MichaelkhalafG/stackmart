@@ -48,9 +48,13 @@ return [
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
     |
+    | 20160 minutes = 14 days. This was null (tokens valid forever), which meant a token lifted
+    | from localStorage stayed good indefinitely — there was no clock working against an attacker.
+    | Two weeks keeps a normal buyer signed in across a purchase without re-login friction.
+    |
     */
 
-    'expiration' => null,
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 20160),
 
     /*
     |--------------------------------------------------------------------------

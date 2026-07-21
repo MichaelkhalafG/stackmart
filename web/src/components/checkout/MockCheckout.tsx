@@ -76,10 +76,21 @@ export function MockCheckout() {
   });
   const order = query.data?.data;
 
-  /** UNCHANGED simulation path: webhook → FulfillOrder → invoice. */
+  /**
+   * Simulation path: the authenticated, owner-scoped simulate endpoint → FulfillOrder → invoice.
+   *
+   * This used to POST the provider webhook directly. That endpoint is now server-to-server only
+   * (shared secret), because a browser-callable webhook meant anyone could forge a paid callback
+   * for any order reference. Same pipeline, same idempotency — it just runs against the signed-in
+   * buyer's own order now, which is why it needs the order id rather than the bare ref.
+   */
   async function simulate(status: "paid" | "failed") {
     if (!ref) {
       setError("Missing checkout reference.");
+      return;
+    }
+    if (!order) {
+      setError("Still loading your order — try again in a moment.");
       return;
     }
     if (status === "paid" && !agreed) {
@@ -90,9 +101,9 @@ export function MockCheckout() {
     setError(undefined);
     setPending(status);
     try {
-      await api("/webhooks/payment", {
+      await api(`/checkout/${order.id}/simulate`, {
         method: "POST",
-        body: JSON.stringify({ ref, status }),
+        body: JSON.stringify({ status }),
       });
       router.push(
         status === "paid" ? `/checkout/success?ref=${encodeURIComponent(ref)}` : "/checkout/cancel",
