@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Mail;
  * Webhook idempotency (S4.02 + FulfillOrder S4.03) — POST /api/webhooks/payment.
  * Written to the FROZEN §Webhook contract (Planning/12_API_Specification.md) against
  * the REAL FakePaymentProvider flow (payload { ref, status } → PaymentEvent → FulfillOrder).
- * The webhook + FulfillOrder are merged on dev@day-4, so these run unconditionally now
- * (J5.03 un-skipped the cross-branch guard). NEVER stubs the endpoint; NEVER names a
+ * The webhook + FulfillOrder are exercised for real. NEVER stubs the endpoint; NEVER names a
  * gateway. Engine-agnostic assertions.
  */
 

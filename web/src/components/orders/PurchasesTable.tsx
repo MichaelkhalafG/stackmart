@@ -40,7 +40,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "
  *     19-character mono license key is a sideways-scrolling strip at 360px;
  *   - `md`+ (`hidden md:block`): the original shadcn Table, unchanged.
  * Loading/error/empty are shared by both. Client component — rendered inside the S3.03 (account)
- * guard. Consumes the orders-read API (cross-branch) → fully live after day-4 merges.
+ * guard. Consumes the orders-read API.
  */
 export function PurchasesTable() {
   const query = useQuery({

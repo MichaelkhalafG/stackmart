@@ -58,10 +58,10 @@ const TEST_WEBHOOK_SECRET = 'test-webhook-secret';
  * Whether S3.01 auth endpoints are registered on the current branch.
  *
  * The auth-flow tests are written to the FROZEN §Auth contract but the endpoints
- * live on `day-3` (routes/auth.php is empty on `day-3`). Each auth
+ * may be absent. Each auth
  * test is guarded with `->skip(fn () => ! authEndpointsAvailable(), …)` so the
  * suite is green here now and the auth tests light up automatically once S3.01 is
- * merged at end-of-day integration (roadmap dependency J3.03 dep S3.01).
+ * registered.
  */
 function authEndpointsAvailable(): bool
 {
@@ -74,5 +74,4 @@ function authEndpointsAvailable(): bool
     return false;
 }
 // Note: the Day-4 commerce endpoints (checkout/webhook/download) are permanently merged on
-// dev@day-4, so their tests run unconditionally now — the checkout/webhook/download
-// "…Available()" cross-branch guards were removed in J5.03 (no longer needed).
+// the main branch, so their tests run unconditionally.

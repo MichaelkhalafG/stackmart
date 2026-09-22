@@ -6,7 +6,7 @@ import { MobilePageHeader } from "@/components/layout/MobilePageHeader";
 /**
  * Purchases (S4.06) — the buyer's real orders (status, license key + copy, download). Replaces the
  * S3.05 Blankslate placeholder. Renders inside the S3.03 `(account)` guard; `PurchasesTable`
- * fetches the frozen `GET /api/orders` shape (the orders-read API, live after day-4).
+ * fetches the frozen `GET /api/orders` shape (the orders-read API).
  */
 export default function PurchasesPage() {
   return (

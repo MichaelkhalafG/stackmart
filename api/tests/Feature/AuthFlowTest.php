@@ -5,14 +5,14 @@ use App\Models\User;
 /*
  * Auth flow — register / login / logout / me (Sanctum Bearer tokens).
  * Written to the FROZEN §Auth contract (Planning/12_API_Specification.md). The
- * endpoints (S3.01) live on `day-3`; routes/auth.php is empty on this
+ * endpoints (S3.01) may be absent on some
  * branch, so every test SKIPS here and runs automatically once S3.01 is merged
- * at end-of-day integration (roadmap dependency J3.03 dep S3.01). The endpoints
+ * once registered. The endpoints
  * are NEVER stubbed — these hit the real HTTP layer.
  */
 
 $authAvailable = fn (): bool => ! authEndpointsAvailable();
-$reason = 'S3.01 auth endpoints land on day-3 — green after end-of-day integration.';
+$reason = 'S3.01 auth endpoints are not registered.';
 
 it('registers a user and issues a token', function () {
     $res = $this->postJson('/api/auth/register', [

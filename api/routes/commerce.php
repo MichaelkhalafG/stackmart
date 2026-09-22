@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 |   POST /webhooks/payment         none    provider-verified → PaymentEvent → FulfillOrder (idempotent)     [S4.02]
 |
 | Provider stays behind the PaymentProvider contract (app/Payments, S1.07) — never name a
-| gateway here. This file was authored by BOTH developers on Day 4 and merged keep-both at end-of-day integration.
+| gateway here.
 */
 
 // Bearer-authenticated buyer routes (Sanctum). ONE group for checkout, the orders read API,

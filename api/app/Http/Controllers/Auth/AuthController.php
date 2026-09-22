@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
  *
  * Thin by design (Planning/09_Backend_Architecture.md): validate via Form Request,
  * touch Eloquent, shape the JSON inline. No UserResource — the user block is
- * serialized here (API Resources are owned). Response shapes are the frozen
+ * serialized here (no API Resource). Response shapes are the frozen
  * contract (Planning/12_API_Specification.md §Auth) and must not drift.
  *
  * Token issuance uses Sanctum's `createToken()` / `currentAccessToken()`, which come

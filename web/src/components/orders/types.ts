@@ -2,7 +2,7 @@
  * One order as returned by the FROZEN buyer orders contract (12_API_Specification.md §Buyer) —
  * `GET /api/orders` (`{data:[Order]}`) and `GET /api/orders/{id}` (a single `Order`). Built by the
  * orders-read API + `OrderResource` (J4.01, this cycle). The frontend consumes only this
- * shape and never the live code.
+ * shape.
  */
 export type Order = {
   id: number;

@@ -9,7 +9,7 @@ use Laravel\Sanctum\Sanctum;
  * Checkout creation (S4.01) — POST /api/checkout { product_id } → { url }.
  * Asserts the FROZEN §Buyer contract (Planning/12_API_Specification.md) against the
  * REAL FakePaymentProvider (never a gateway, never a stub). The endpoint is merged on
- * dev@day-4, so these run unconditionally now (J5.03 un-skipped the cross-branch guard).
+ * the main branch, so these run unconditionally.
  * Engine-agnostic assertions.
  */
 
